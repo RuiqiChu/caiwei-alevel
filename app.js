@@ -742,7 +742,7 @@ function buildPrintPaper(target,questions,minutes,answerKey){
     }
     item.append(element('h2',`Question ${index+1}`));
     renderQuestionContent(item,question.electronic_content.body,question.question_id);
-    item.append(element('p',`${question.question_id} · ${question.qp_filename} · PDF p. ${question.source_page}`,'paper-source'));
+    item.append(element('p',examSource(question),'paper-source'));
     paper.append(item);
   }
   if(answerKey){
@@ -751,7 +751,7 @@ function buildPrintPaper(target,questions,minutes,answerKey){
     const table=element('table');
     const columns=element('thead');
     const heading=element('tr');
-    for(const label of ['No.','Answer','Syllabus','Question ID','Mark scheme']){
+    for(const label of ['No.','Answer','Syllabus','Source']){
       const cell=element('th',label);
       cell.scope='col';
       heading.append(cell);
@@ -761,7 +761,7 @@ function buildPrintPaper(target,questions,minutes,answerKey){
     for(const [index,question] of questions.entries()){
       const row=element('tr');
       for(const value of [index+1,question.correct_option,question.primary_objective,
-        question.question_id,`${question.ms_filename}, p. ${question.ms_pdf_page}`]){
+        examSource(question)]){
         row.append(element('td',value??''));
       }
       rows.append(row);
@@ -1059,9 +1059,8 @@ function createStudyController(){
   function openReport(question){
     if(!question?.electronic_content)return;
     reportQuestion=question;reportId=crypto.randomUUID();
-    const source=studySource(question);
     $('report-form').reset();$('report-submit').disabled=false;$('report-message').textContent='';
-    $('report-source').textContent=`${source.questionId} · ${source.sourceFile} · PDF 第 ${source.page} 页 / Q${source.questionNumber}`;
+    $('report-source').textContent=examSource(question);
     $('report-dialog').showModal();
   }
   $('report-form').addEventListener('submit',async event=>{
@@ -1339,8 +1338,8 @@ function renderDirectory(){
     const button=document.createElement('button');button.className='question-row';button.dataset.id=id;
     button.id='row-'+id;
     const title=state.view==='skipped'?(item.scope_status==='LEGACY'?'旧考纲归档':'来源或答案待复核'):escapeHtml(topicSummary(item.primary_summary_cn));
-    button.innerHTML=`<div class="row-top"><span class="row-number">${escapeHtml(item.chapter_code||'')} · ${String(item.original_workbook_number).padStart(2,'0')}</span><span class="row-progress" hidden></span></div><div class="row-title">${title}</div><div class="row-source">${item.year} ${sessions[item.session_code]} · ${item.component_code} / Q${item.original_question_number}</div>`;
-    button.dataset.label=`${item.chapter_code||''} 题目 ${item.original_workbook_number}，${item.year}年，原卷第${item.original_question_number}题`;
+    button.innerHTML=`<div class="row-top"><span class="row-number">${escapeHtml(item.chapter_code||'')}</span><span class="row-progress" hidden></span></div><div class="row-title">${title}</div><div class="row-source">${item.year} ${sessions[item.session_code]} · ${item.component_code} / Q${item.original_question_number}</div>`;
+    button.dataset.label=examSource(item);
     button.addEventListener('click',()=>selectQuestion(id));
     highlightRow(button,id===state.selected);paintRowProgress(button);
     rows.append(button);
@@ -1391,6 +1390,10 @@ async function selectQuestion(id,{scroll=false,remember=true}={}){
   }catch(error){if(sequence===state.detailSequence){$('random-next').disabled=false;toast(error.message);}}
 }
 
+function examSource(question){
+  return `${question.year} ${sessions[question.session_code]} · ${question.question_id.slice(0,4)} / ${question.component_code} · Q${question.original_question_number}`;
+}
+
 function paintDetail(){
   const d=state.detail;const skip=d.status==='skipped';
   $('question-title').textContent=skip?(d.scope_status==='LEGACY'?'旧考纲归档':'来源或答案待复核'):topicSummary(d.primary_summary_cn);
@@ -1408,10 +1411,7 @@ function paintDetail(){
     $('topic-list').append(button);
   }
   $('review-note').textContent=skip?d.evidence_note_cn:'分类及题面仍待教师独立复核。';
-  $('source-info').innerHTML=`<dt>考季</dt><dd>${d.year} ${sessions[d.session_code]}</dd><dt>试卷</dt><dd>${d.question_id.slice(0,4)} / ${d.component_code}</dd><dt>原题号</dt><dd>Q${d.original_question_number}</dd><dt>原卷位置</dt><dd>PDF 第 ${d.source_page} 页</dd>${!skip?`<dt>分册位置</dt><dd>PDF 第 ${d.booklet_pdf_page} 页</dd>`:''}`;
-  $('stable-id').textContent=d.question_id;
-  $('source-trace').textContent=['QP','MS'].map(role=>{const asset=d.source_assets[role];
-  return role+' · '+asset.original_filename+' · PDF 第 '+asset.page+' 页 / 共 '+asset.page_count+' 页';}).join('\n');
+  $('source-info').innerHTML=`<dt>考季</dt><dd>${d.year} ${sessions[d.session_code]}</dd><dt>试卷</dt><dd>${d.question_id.slice(0,4)} / ${d.component_code}</dd><dt>原题号</dt><dd>Q${d.original_question_number}</dd>`;
   $('report-question').hidden=skip;
   $('inspector-note').hidden=!skip;
 }
@@ -1430,7 +1430,7 @@ function paintNavigation(){
   if(!d)return;
   const index=state.items.findIndex(item=>item.question_id===d.question_id);
   const position=state.view==='wrong'&&index<0?'已移出错题本':`${d.status==='skipped'?'已跳过':'当前题目'} ${index+1} / ${state.items.length}`;
-  $('question-position').textContent=`${position} · ${d.chapter_code||''} 分册 #${d.original_workbook_number}`;
+  $('question-position').textContent=position;
   $('previous').disabled=!neighbour(-1);
   $('next').disabled=!neighbour(1);
   $('random-next').disabled=randomRequest||(state.view==='wrong'&&!state.items.length&&!wrongCount());
@@ -1772,7 +1772,7 @@ function showAnswer(){
   $('answer-letter').textContent=`标准答案：${d.correct_option}`;
   const primary=d.topics.find(topic=>topic.topic_role==='PRIMARY');
   $('answer-syllabus').textContent=primary?`（考纲对应：${primary.reference_code}）`:'（考纲对应：待复核）';
-  $('answer-source').textContent=`${d.year} ${sessions[d.session_code]} · ${d.component_code} / Q${d.original_question_number} · ${d.marks} mark · MS 第 ${d.ms_pdf_page} 页`;
+  $('answer-source').textContent=examSource(d);
 }
 
 for(const view of ['included','wrong','skipped'])$(view+'-tab').addEventListener('click',()=>showView(view));
