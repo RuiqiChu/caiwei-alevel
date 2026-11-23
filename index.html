@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="采薇alevel物理课堂。用原创样题体验 9702 AS 和 0625 IGCSE 在线练习。">
+  <title>采薇alevel物理课堂</title>
+  <link rel="stylesheet" href="./style.css">
+  
+
+
+
+
+
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="采薇alevel物理课堂主页">
+      <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="5" fill="currentColor"/><ellipse cx="22" cy="22" rx="20" ry="10" transform="rotate(-35 22 22)" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="36" cy="12" r="3" fill="var(--gold)"/></svg>
+      <span>采薇alevel物理课堂</span>
+    </a>
+    <button id="open-settings" type="button" class="settings-trigger secondary-button" aria-haspopup="dialog" aria-controls="settings-dialog" disabled>设置</button>
+  </header>
+  <main>
+    <section class="intro">
+      <div><div class="eyebrow" id="current-bank-label">0625 IGCSE · PAPER 2</div><div class="title-line"><h1>采薇alevel物理课堂</h1><div class="author-links"><a class="author-link" href="https://space.bilibili.com/1313090027" target="_blank" rel="noopener noreferrer">B站作者主页</a><a id="github-project" class="author-link" role="link" aria-disabled="true" title="项目地址待补充">GitHub 项目</a></div></div><div class="title-en" id="igcse-intro">用原创样题试用两套物理练习界面</div></div>
+      <div class="syllabus-stamp" id="igcse-syllabus"><span>当前分类考纲</span><strong id="syllabus-version">2026–2028</strong><small>按现行考纲知识点分类</small></div>
+    </section>
+    <div id="igcse-bank">
+    <section class="stats" aria-label="专题概览">
+      <div><strong id="stat-included">—</strong><span>原创样题</span></div><div class="muted-stat"><strong id="stat-skipped">—</strong><span>待处理题目</span></div>
+    </section>
+    <nav id="study-entry" class="study-entry" aria-label="测验">
+      <button class="primary-button" type="button" id="open-paper-setup" disabled>组卷与限时测验</button>
+      <button class="secondary-button" type="button" id="resume-study" hidden>继续测验</button>
+    </nav>
+    <details class="learning-progress" id="learning-progress">
+      <summary><span id="progress-label">学习进度 · 六章正确率</span><span id="progress-summary">已做 0 题</span></summary>
+      <div class="progress-body">
+        <svg id="accuracy-chart" viewBox="0 0 328 252" role="group" aria-label="六章正确率雷达图"></svg>
+        <div>
+          <p class="progress-method">按主考点所属考纲小节统计，正确率为答对次数 ÷ 作答次数，含复练。点选章节可查看小节。</p>
+          <ol id="chapter-accuracy" aria-label="各章正确率与答对次数"></ol>
+          <p id="appendix-progress" class="progress-method" hidden></p>
+          <div class="progress-actions"><p id="progress-storage" class="progress-storage"></p><button id="reset-progress" type="button" disabled>重置学习记录</button></div>
+        </div>
+        <section id="section-accuracy-panel" class="section-accuracy-panel" aria-labelledby="section-accuracy-title" hidden>
+          <div class="accuracy-detail-heading"><h3 id="section-accuracy-title" tabindex="-1"></h3><button id="close-accuracy-detail" class="text-button" type="button">收起小节</button></div>
+          <label class="section-priority">抽题顺序 <select id="section-priority"><option value="unseen">未做题优先</option><option value="wrong">错题优先</option></select></label>
+          <ol id="section-accuracy" aria-label="各小节正确率与答对次数"></ol>
+        </section>
+      </div>
+    </details>
+    <p id="storage-status" class="storage-status" role="status" hidden>此浏览器暂时无法保存进度，记录仅保留在本次页面。</p>
+    <section id="study-view" class="study-view" aria-labelledby="study-title" hidden>
+      <header class="study-heading">
+        <div><h2 id="study-title" tabindex="-1"></h2><p id="study-meta"></p><p id="study-score" hidden></p></div>
+        <button type="button" class="text-button" id="leave-study">返回题库</button>
+      </header>
+      <div id="study-ready" class="study-ready" hidden>
+        <p>试卷已生成。开始测验后按计时作答，交卷后查看得分和答案。</p>
+        <button type="button" class="primary-button" id="start-timed-study">开始计时</button>
+      </div>
+      <div id="study-active" hidden>
+        <div class="study-status" id="study-status"><span id="study-position"></span><time id="study-clock" aria-label="剩余时间"></time><button type="button" class="text-button" id="study-mistakes" hidden>只看错题与未答</button></div>
+        <nav id="study-question-grid" class="study-question-grid" aria-label="题号导航"></nav>
+        <article id="study-question" class="electronic-question" lang="en"></article>
+        <div class="study-feedback" id="study-feedback" aria-live="polite" hidden></div>
+        <nav class="practice-nav study-nav" aria-label="测验作答">
+          <button type="button" class="secondary-button" id="study-prev">上一题</button>
+          <button type="button" class="secondary-button" id="study-next">下一题</button>
+          <button type="button" class="primary-button" id="study-submit">交卷</button>
+          <button type="button" class="text-button" id="study-report">报错</button>
+        </nav>
+      </div>
+      <div id="study-pdf-actions" class="study-pdf-actions" hidden>
+        <label><input type="checkbox" id="include-answer-key" checked>附独立答案页</label>
+        <button type="button" class="secondary-button" id="download-study-pdf">导出 PDF</button>
+      </div>
+    </section>
+    <div class="workspace" id="workspace">
+      <aside class="library">
+        <div class="library-top"><h2>题目目录</h2><button class="text-button" id="reset-filters">重置筛选</button></div>
+        <div class="list-tabs" role="group" aria-label="题目状态"><button id="included-tab" class="active" aria-pressed="true">全部题目 <span id="included-count">—</span></button><button id="wrong-tab" aria-pressed="false">错题本 <span id="wrong-count">0</span></button><button id="skipped-tab" aria-pressed="false">旧考纲 / 跳过 <span id="skipped-count">—</span></button></div>
+        <label class="search"><span class="sr-only">搜索英文题目、题号或考点</span><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="m12 12 5 5"/></svg><input id="search" type="search" placeholder="搜索英文题目、题号或考点"></label>
+        <div class="filter-row"><label><span class="sr-only">考试年份</span><select id="year-filter"><option value="">全部年份</option></select></label><label><span class="sr-only">章节分册</span><select id="chapter-filter"><option value="">全部章节</option></select></label></div>
+        <label class="check-filter"><input type="checkbox" id="primary-filter">仅显示主考点属于分册所在大章的题目</label>
+        <div class="list-meta"><span id="result-count" aria-live="polite">正在读取题目…</span><span>按小节浏览</span></div>
+        <div id="question-list" class="question-list" aria-label="题目列表"></div>
+      </aside>
+      <section class="reading" aria-label="题目阅读区">
+        <div id="empty-state" class="empty-state" hidden><h2 id="empty-title">没有找到符合条件的题目</h2><p id="empty-help">可以调整年份、章节，或清空搜索条件。</p><button id="empty-reset" class="primary-button">重置筛选</button></div>
+        <div id="question-content">
+          <div class="question-heading"><div><div class="eyebrow" id="question-position">题目 —</div><h2 id="question-title" tabindex="-1">正在载入题目…</h2><div class="question-subtitle" id="question-source"></div><p id="question-progress" class="question-progress" hidden></p></div><div class="pager"><button id="previous" aria-label="上一题" disabled>←</button></div></div>
+          <div class="document-tabs" role="tablist" aria-label="查看资料"><button id="tab-electronic" class="active" role="tab" aria-selected="true">电子题目</button><button id="tab-question" role="tab" aria-selected="false">原卷对照</button><button id="tab-ms" role="tab" aria-selected="false">官方评分标准</button><button id="tab-syllabus" role="tab" aria-selected="false">考纲原文</button></div>
+          <div class="reader-toolbar"><span id="page-caption">PDF 物理页</span><div><button id="focus-question" title="滚动至本题">定位本题</button><button id="zoom-out" aria-label="缩小原页">−</button><span id="zoom-level">100%</span><button id="zoom-in" aria-label="放大原页">＋</button><a id="open-pdf" href="#" target="_blank" rel="noopener">打开 PDF ↗</a></div></div>
+          <div class="reader" id="reader"><article id="electronic-question" class="electronic-question" lang="en" hidden></article><div id="page-loading" class="page-loading">正在读取原卷页面…</div><div id="page-error" class="page-error" hidden>暂时无法显示此页。可以点击上方“打开 PDF”查看。</div><div class="page-sheet" id="page-sheet" hidden><img id="document-image" alt="原始试卷完整页面"><div id="focus-ring" class="focus-ring" aria-hidden="true"></div></div></div>
+          <div class="practice-footer">
+            <section class="answer-panel" id="answer-panel" aria-label="答案反馈" hidden>
+              <div id="practice-feedback" class="practice-feedback" role="status" aria-live="polite" hidden></div>
+              <button class="text-button" id="reveal-answer" disabled>查看参考答案</button>
+              <div id="answer-result" hidden>
+                <div class="answer-letter" id="answer-letter"></div>
+                <div class="answer-syllabus" id="answer-syllabus"></div>
+                <div class="answer-source" id="answer-source"></div>
+                <div class="answer-actions"><button class="text-button" id="view-ms">查看评分标准原页 →</button><button class="text-button" id="hide-answer">收起答案</button></div>
+              </div>
+            </section>
+            <nav class="practice-nav" aria-label="换题">
+              <button class="primary-button" id="next" disabled>下一题</button>
+              <button class="secondary-button" id="random-next" disabled>随机下一题</button>
+              <button class="secondary-button" id="retry-question" hidden>重做本题</button>
+              <button class="secondary-button" id="wrong-done" hidden>返回全部题目</button>
+            </nav>
+            <details class="random-ranges" id="random-ranges">
+              <summary id="random-summary">随机范围 · 全部章节</summary>
+              <div class="range-toolbar"><p id="random-help">按题目分册抽取，未勾选时从全库抽题。</p><button class="text-button" id="reset-ranges">清除选择</button></div>
+              <div id="random-chapters" class="random-chapters"></div>
+            </details>
+          </div>
+          <div class="reader-footnote"><span class="dot"></span><span id="reader-footnote-text">电子题目可选择、复制；可随时切换原卷核对。</span></div>
+        </div>
+      </section>
+      <aside class="inspector" aria-label="答案与考纲信息">
+        <section class="info-card"><div class="card-heading"><h2>考纲分类</h2><span id="scope-badge" class="status-badge">现行考纲</span></div><div id="question-marks" class="question-marks"></div><div id="topic-list" class="topic-list"></div><p class="review-note" id="review-note"></p></section>
+        <section class="source-card"><h2>题目出处</h2><dl id="source-info"></dl><button id="report-question" type="button" class="text-button" hidden>报错</button><details><summary>查看稳定题目 ID</summary><code id="stable-id"></code></details><details><summary>来源文件与SHA-256</summary><pre id="source-trace"></pre></details></section>
+        <p class="inspector-note" id="inspector-note">学习进度保存在当前浏览器。</p>
+      </aside>
+    </div>
+    <footer>采薇alevel物理课堂 <span>·</span> 网站试用版</footer>
+    </div>
+    <section id="as-bank" class="empty-state bank-empty" aria-labelledby="as-bank-heading" hidden>
+      <h2 id="as-bank-heading">9702 AS 物理题库准备中</h2>
+      <button id="switch-empty-bank" class="secondary-button settings-trigger" type="button" aria-haspopup="dialog" aria-controls="settings-dialog">切换题库</button>
+    </section>
+  </main>
+  <dialog id="settings-dialog" class="study-dialog" aria-labelledby="settings-title">
+    <form id="settings-form">
+      <h2 id="settings-title">设置</h2>
+      <label class="settings-bank">题库
+        <select id="bank-selection"><option value="0625">0625 IGCSE</option><option value="9702-as">9702 AS</option></select>
+      </label>
+      <label class="settings-check"><input id="remove-correct-questions" type="checkbox" checked>答对后自动移出错题本</label>
+      <p id="settings-error" role="alert" hidden>设置保存失败，请重试。</p>
+      <div class="study-dialog-actions"><button id="cancel-settings" class="secondary-button" type="button">取消</button><button class="primary-button" id="save-settings" type="submit">保存设置</button></div>
+    </form>
+  </dialog>
+  <dialog id="paper-setup" class="study-dialog" aria-labelledby="paper-setup-title">
+    <form id="paper-setup-form">
+      <h2 id="paper-setup-title">按考纲组卷</h2>
+      <p>选择主考点所在小节，留空时从全库抽题。</p>
+      <div id="paper-scope"></div>
+      <div class="paper-settings">
+        <label>题数 <input id="paper-count" type="number" min="1" max="40" value="40" required></label>
+        <label>限时（分钟） <input id="paper-minutes" type="number" min="1" max="180" value="45" required></label>
+        <span id="paper-available" aria-live="polite"></span>
+      </div>
+      <p id="paper-setup-error" role="alert" hidden></p>
+      <div class="study-dialog-actions"><button type="button" class="secondary-button" data-close="paper-setup">取消</button><button class="primary-button">生成试卷</button></div>
+    </form>
+  </dialog>
+  <dialog id="study-submit-dialog" class="study-dialog" aria-labelledby="study-submit-title">
+    <form id="study-submit-form">
+      <h2 id="study-submit-title">确认交卷</h2><p id="study-submit-summary"></p>
+      <div class="study-dialog-actions"><button type="button" class="secondary-button" data-close="study-submit-dialog">继续作答</button><button class="primary-button">确认交卷</button></div>
+    </form>
+  </dialog>
+  <dialog id="report-dialog" class="study-dialog" aria-labelledby="report-title">
+    <form id="report-form">
+      <h2 id="report-title">反馈题目问题</h2>
+      <p id="report-source"></p>
+      <label>问题类型 <select id="report-category"><option value="stem">题面或选项</option><option value="figure">图表或公式</option><option value="answer">官方答案</option><option value="syllabus">考纲归类</option><option value="other">其他</option></select></label>
+      <label>具体问题 <textarea id="report-note" required maxlength="600" rows="4" placeholder="例如，B 选项的单位应为 m/s²"></textarea></label>
+      <p id="report-message" aria-live="polite"></p>
+      <div class="study-dialog-actions"><button type="button" class="secondary-button" data-close="report-dialog">关闭</button><button id="report-submit" class="primary-button">保存报错</button></div>
+    </form>
+  </dialog>
+  <section id="printed-paper" hidden></section>
+  <dialog id="progress-reset-dialog" aria-labelledby="progress-reset-title" aria-describedby="progress-reset-description">
+    <form id="progress-reset-form">
+      <h2 id="progress-reset-title">重置学习记录</h2>
+      <p id="progress-reset-description"></p>
+      <p id="progress-reset-error" role="alert" hidden>重置失败，请重试。</p>
+      <div class="reset-dialog-actions">
+        <button id="cancel-progress-reset" class="secondary-button" type="button" autofocus>取消</button>
+        <button id="confirm-progress-reset" type="submit">确认重置</button>
+      </div>
+    </form>
+  </dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+
+<script src="./questions.js" defer></script>
+<script src="./app.js" defer></script>
+</body>
+</html>
