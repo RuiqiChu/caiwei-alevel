@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="采薇alevel物理课堂。按考纲练习 9702 AS Paper 1 和 0625 IGCSE Paper 2。">
   <title>采薇alevel物理课堂</title>
-  <link rel="stylesheet" href="./style.css?v=6f2ad5e2a620253f">
+  <link rel="stylesheet" href="./style.css?v=d30ec34266d5ac22">
   
 
 
@@ -23,9 +23,8 @@
     <nav class="classroom-nav" aria-label="课堂栏目">
       <a href="./?bank=0625" data-site-bank="0625">IGCSE选择题</a>
       <a href="./?bank=9702-as" data-site-bank="9702-as">AS选择题</a>
-      <a href="./lab.html">物理交互实验室</a>
+      <a href="./lab.html?v=d30ec34266d5ac22">物理交互实验室</a>
     </nav>
-    <button id="open-settings" type="button" class="settings-trigger secondary-button" aria-haspopup="dialog" aria-controls="settings-dialog" disabled>设置</button>
   </header>
   <main>
     <section class="intro">
@@ -88,6 +87,9 @@
       <aside class="library">
         <div class="library-top"><h2>题目目录</h2><button class="text-button" id="reset-filters">重置筛选</button></div>
         <div class="list-tabs" role="group" aria-label="题目状态"><button id="included-tab" class="active" aria-pressed="true">全部题目 <span id="included-count">—</span></button><button id="wrong-tab" aria-pressed="false">错题本 <span id="wrong-count">0</span></button><button id="skipped-tab" aria-pressed="false">旧考纲 / 跳过 <span id="skipped-count">—</span></button></div>
+        <label class="check-filter wrong-book-preference" id="wrong-book-preference" hidden>
+          <input id="remove-correct-questions" type="checkbox" checked>答对后自动移出错题本
+        </label>
         <label class="search"><span class="sr-only">搜索英文题目、题号或考点</span><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="m12 12 5 5"/></svg><input id="search" type="search" placeholder="搜索英文题目、题号或考点"></label>
         <div class="filter-row"><label><span class="sr-only">考试年份</span><select id="year-filter"><option value="">全部年份</option></select></label><label><span class="sr-only">章节分册</span><select id="chapter-filter"><option value="">全部章节</option></select></label></div>
         <label class="check-filter"><input type="checkbox" id="primary-filter">仅显示主考点属于分册所在大章的题目</label>
@@ -137,20 +139,9 @@
     </div>
     <section id="as-bank" class="empty-state bank-empty" aria-labelledby="as-bank-heading" hidden>
       <h2 id="as-bank-heading">9702 AS 物理题库准备中</h2>
-      <button id="switch-empty-bank" class="secondary-button settings-trigger" type="button" aria-haspopup="dialog" aria-controls="settings-dialog">切换题库</button>
+      <a href="./?bank=0625">进入 IGCSE选择题</a>
     </section>
   </main>
-  <dialog id="settings-dialog" class="study-dialog" aria-labelledby="settings-title">
-    <form id="settings-form">
-      <h2 id="settings-title">设置</h2>
-      <label class="settings-bank">题库
-        <select id="bank-selection"><option value="0625">0625 IGCSE</option><option value="9702-as">9702 AS</option></select>
-      </label>
-      <label class="settings-check"><input id="remove-correct-questions" type="checkbox" checked>答对后自动移出错题本</label>
-      <p id="settings-error" role="alert" hidden>设置保存失败，请重试。</p>
-      <div class="study-dialog-actions"><button id="cancel-settings" class="secondary-button" type="button">取消</button><button class="primary-button" id="save-settings" type="submit">保存设置</button></div>
-    </form>
-  </dialog>
   <dialog id="paper-setup" class="study-dialog" aria-labelledby="paper-setup-title">
     <form id="paper-setup-form">
       <h2 id="paper-setup-title">按考纲组卷</h2>
@@ -195,7 +186,7 @@
   </dialog>
   <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="./questions.js?v=6f2ad5e2a620253f" defer></script>
-<script src="./app.js?v=6f2ad5e2a620253f" defer></script>
+<script src="./questions.js?v=d30ec34266d5ac22" defer></script>
+<script src="./app.js?v=d30ec34266d5ac22" defer></script>
 </body>
 </html>

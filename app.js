@@ -1297,6 +1297,7 @@ function updateViewButtons(){
     $(view+'-tab').setAttribute('aria-pressed',String(active));
   }
   for(const id of ['year-filter','primary-filter'])$(id).disabled=skip;
+  $('wrong-book-preference').hidden=state.view!=='wrong';
   updateRandomCount();
 }
 function isWrong(id){return isInWrongBook(progress.records.get(id));}
@@ -1590,14 +1591,7 @@ function paintPreferences(){
   $('igcse-syllabus').hidden=asEmpty;
   $('igcse-bank').hidden=asEmpty;
   $('as-bank').hidden=!asEmpty;
-  $('open-settings').disabled=false;
-}
-
-function openSettings(){
-  $('bank-selection').value=asAvailable?pageBank:progress.preferences.bank;
   $('remove-correct-questions').checked=progress.preferences.removeCorrect;
-  $('settings-error').hidden=true;
-  $('settings-dialog').showModal();
 }
 
 async function confirmProgressReset(event){
@@ -1829,29 +1823,16 @@ $('progress-reset-dialog').addEventListener('cancel',event=>{
   if($('confirm-progress-reset').disabled)event.preventDefault();
 });
 $('progress-reset-form').addEventListener('submit',confirmProgressReset);
-$('open-settings').addEventListener('click',openSettings);
-$('switch-empty-bank').addEventListener('click',openSettings);
-$('cancel-settings').addEventListener('click',()=>$('settings-dialog').close());
-$('settings-dialog').addEventListener('cancel',event=>{
-  if($('save-settings').disabled)event.preventDefault();
-});
-$('settings-form').addEventListener('submit',async event=>{
-  event.preventDefault();
-  const save=$('save-settings');
-  save.disabled=true;$('cancel-settings').disabled=true;$('settings-error').hidden=true;
+$('remove-correct-questions').addEventListener('change',async event=>{
+  const checkbox=event.currentTarget;
+  checkbox.disabled=true;
   try{
-    const selectedBank=$('bank-selection').value;
-    await progress.savePreferences(selectedBank,$('remove-correct-questions').checked);
-    if(asAvailable&&selectedBank!==pageBank){
-      openOfflineBank(selectedBank);
-      return;
-    }
-    $('settings-dialog').close();
-    $('open-settings').focus({preventScroll:true});
+    await progress.savePreferences(progress.preferences.bank,checkbox.checked);
   }catch{
-    $('settings-error').hidden=false;
+    checkbox.checked=progress.preferences.removeCorrect;
+    toast('错题本选项保存失败，请重试。');
   }finally{
-    save.disabled=false;$('cancel-settings').disabled=false;
+    checkbox.disabled=false;
   }
 });
 
