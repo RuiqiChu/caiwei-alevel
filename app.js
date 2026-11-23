@@ -1164,6 +1164,7 @@ const state = {view:'included',items:[],directory:[],selected:null,detail:null,t
 const sessions = {FM:'Feb/Mar',MJ:'May/June',ON:'Oct/Nov'};
 const asPage = new URLSearchParams(location.search).get('bank')!=='0625';
 const pageBank = asPage?'9702-as':'0625';
+document.querySelector(`[data-site-bank="${pageBank}"]`).setAttribute('aria-current', 'page');
 const chapterNames = asPage
   ? ['物理量和单位','运动学','动力学','力、密度和压强','功、能量和功率','固体形变','波','叠加','电学','直流电路','粒子物理']
   : ['运动、力和能量','热物理','波','电和磁','核物理','空间物理'];

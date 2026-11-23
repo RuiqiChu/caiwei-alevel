@@ -213,3 +213,55 @@ main{max-width:1690px;margin:0 auto;padding:0 42px}.intro{display:flex;justify-c
   .paper-key th, .paper-key td { border-bottom: 1px solid #b5c1bb; padding: 1mm 2mm; text-align: left; overflow-wrap: anywhere; }
   .paper-key th { border-bottom: 1px solid #3c554e; }
 }
+
+.classroom-topbar {
+  gap: 16px;
+}
+
+.classroom-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-inline-end: auto;
+}
+
+.classroom-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: var(--ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.classroom-nav a:hover,
+.classroom-nav a[aria-current="page"] {
+  background: var(--green-wash);
+  color: var(--green-dark);
+}
+
+.classroom-nav a[aria-current="page"] {
+  box-shadow: inset 0 -2px var(--green);
+}
+
+@media (max-width: 850px) {
+  .classroom-topbar {
+    height: auto;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-block: 12px;
+  }
+
+  .classroom-nav {
+    order: 1;
+    flex-basis: 100%;
+    gap: 4px;
+  }
+
+  .classroom-nav a {
+    padding-inline: 8px;
+    font-size: 13px;
+  }
+}

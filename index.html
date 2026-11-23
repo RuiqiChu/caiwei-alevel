@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="采薇alevel物理课堂。按考纲练习 9702 AS Paper 1 和 0625 IGCSE Paper 2。">
   <title>采薇alevel物理课堂</title>
-  <link rel="stylesheet" href="./style.css?v=d1ec653f1ceb8884">
+  <link rel="stylesheet" href="./style.css?v=daa541aecbc373fa">
   
 
 
@@ -15,16 +15,21 @@
 
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="#" aria-label="采薇alevel物理课堂主页">
+  <header class="topbar classroom-topbar">
+    <a class="brand" href="./" aria-label="采薇alevel物理课堂主页">
       <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="5" fill="currentColor"/><ellipse cx="22" cy="22" rx="20" ry="10" transform="rotate(-35 22 22)" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="36" cy="12" r="3" fill="var(--gold)"/></svg>
       <span>采薇alevel物理课堂</span>
     </a>
+    <nav class="classroom-nav" aria-label="课堂栏目">
+      <a href="./?bank=0625" data-site-bank="0625">IGCSE选择题</a>
+      <a href="./?bank=9702-as" data-site-bank="9702-as">AS选择题</a>
+      <a href="./lab.html">物理交互实验室</a>
+    </nav>
     <button id="open-settings" type="button" class="settings-trigger secondary-button" aria-haspopup="dialog" aria-controls="settings-dialog" disabled>设置</button>
   </header>
   <main>
     <section class="intro">
-      <div><div class="eyebrow" id="current-bank-label">0625 IGCSE · PAPER 2</div><div class="title-line"><h1>采薇alevel物理课堂</h1><div class="author-links"><a class="author-link" href="https://space.bilibili.com/1313090027" target="_blank" rel="noopener noreferrer">B站作者主页 ↗</a><a id="github-project" class="author-link" role="link" aria-disabled="true" title="项目地址待补充">GitHub 项目</a></div></div><div class="title-en" id="igcse-intro">按章节浏览 · 英文原题与官方答案</div></div>
+      <div><div class="eyebrow" id="current-bank-label">0625 IGCSE · PAPER 2</div><div class="title-line"><h1>采薇alevel物理课堂</h1><div class="author-links"><a class="author-link" href="https://space.bilibili.com/1313090027" target="_blank" rel="noopener noreferrer">B站作者主页 ↗</a><a id="github-project" class="author-link" href="https://github.com/RuiqiChu/caiwei-physics" target="_blank" rel="noopener noreferrer">GitHub 项目 ↗</a></div></div><div class="title-en" id="igcse-intro">按章节浏览 · 英文原题与官方答案</div></div>
       <div class="syllabus-stamp" id="igcse-syllabus"><span>当前分类考纲</span><strong id="syllabus-version">2026–2028</strong><small>按现行考纲知识点分类</small></div>
     </section>
     <div id="igcse-bank">
@@ -190,7 +195,7 @@
   </dialog>
   <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="./questions.js?v=d1ec653f1ceb8884" defer></script>
-<script src="./app.js?v=d1ec653f1ceb8884" defer></script>
+<script src="./questions.js?v=daa541aecbc373fa" defer></script>
+<script src="./app.js?v=daa541aecbc373fa" defer></script>
 </body>
 </html>
