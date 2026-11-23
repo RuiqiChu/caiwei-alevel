@@ -213,9 +213,3 @@ main{max-width:1690px;margin:0 auto;padding:0 42px}.intro{display:flex;justify-c
   .paper-key th, .paper-key td { border-bottom: 1px solid #b5c1bb; padding: 1mm 2mm; text-align: left; overflow-wrap: anywhere; }
   .paper-key th { border-bottom: 1px solid #3c554e; }
 }
-
-.stats .muted-stat, #year-filter, .filter-row label:first-child, .check-filter,
-.source-card details:has(#source-trace) { display: none; }
-.filter-row, .stats { grid-template-columns: minmax(0, 1fr); }
-.reader .electronic-question { min-height: 0; }
-@media (max-width: 720px) { .question-list { min-height: 0; max-height: 12rem; } }

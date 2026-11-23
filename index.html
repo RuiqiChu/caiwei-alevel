@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="采薇alevel物理课堂。用原创样题体验 9702 AS 和 0625 IGCSE 在线练习。">
+  <meta name="description" content="采薇alevel物理课堂。按考纲练习 9702 AS Paper 1 和 0625 IGCSE Paper 2。">
   <title>采薇alevel物理课堂</title>
-  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./style.css?v=d1ec653f1ceb8884">
   
 
 
@@ -16,7 +16,7 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="采薇alevel物理课堂主页">
+    <a class="brand" href="#" aria-label="采薇alevel物理课堂主页">
       <svg class="brand-mark" viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="5" fill="currentColor"/><ellipse cx="22" cy="22" rx="20" ry="10" transform="rotate(-35 22 22)" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="36" cy="12" r="3" fill="var(--gold)"/></svg>
       <span>采薇alevel物理课堂</span>
     </a>
@@ -24,12 +24,12 @@
   </header>
   <main>
     <section class="intro">
-      <div><div class="eyebrow" id="current-bank-label">0625 IGCSE · PAPER 2</div><div class="title-line"><h1>采薇alevel物理课堂</h1><div class="author-links"><a class="author-link" href="https://space.bilibili.com/1313090027" target="_blank" rel="noopener noreferrer">B站作者主页</a><a id="github-project" class="author-link" role="link" aria-disabled="true" title="项目地址待补充">GitHub 项目</a></div></div><div class="title-en" id="igcse-intro">用原创样题试用两套物理练习界面</div></div>
+      <div><div class="eyebrow" id="current-bank-label">0625 IGCSE · PAPER 2</div><div class="title-line"><h1>采薇alevel物理课堂</h1><div class="author-links"><a class="author-link" href="https://space.bilibili.com/1313090027" target="_blank" rel="noopener noreferrer">B站作者主页 ↗</a><a id="github-project" class="author-link" role="link" aria-disabled="true" title="项目地址待补充">GitHub 项目</a></div></div><div class="title-en" id="igcse-intro">按章节浏览 · 英文原题与官方答案</div></div>
       <div class="syllabus-stamp" id="igcse-syllabus"><span>当前分类考纲</span><strong id="syllabus-version">2026–2028</strong><small>按现行考纲知识点分类</small></div>
     </section>
     <div id="igcse-bank">
     <section class="stats" aria-label="专题概览">
-      <div><strong id="stat-included">—</strong><span>原创样题</span></div><div class="muted-stat"><strong id="stat-skipped">—</strong><span>待处理题目</span></div>
+      <div><strong id="stat-included">—</strong><span>已纳入题目</span></div><div class="muted-stat"><strong id="stat-skipped">—</strong><span>待处理题目</span></div>
     </section>
     <nav id="study-entry" class="study-entry" aria-label="测验">
       <button class="primary-button" type="button" id="open-paper-setup" disabled>组卷与限时测验</button>
@@ -86,7 +86,7 @@
         <label class="search"><span class="sr-only">搜索英文题目、题号或考点</span><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="m12 12 5 5"/></svg><input id="search" type="search" placeholder="搜索英文题目、题号或考点"></label>
         <div class="filter-row"><label><span class="sr-only">考试年份</span><select id="year-filter"><option value="">全部年份</option></select></label><label><span class="sr-only">章节分册</span><select id="chapter-filter"><option value="">全部章节</option></select></label></div>
         <label class="check-filter"><input type="checkbox" id="primary-filter">仅显示主考点属于分册所在大章的题目</label>
-        <div class="list-meta"><span id="result-count" aria-live="polite">正在读取题目…</span><span>按小节浏览</span></div>
+        <div class="list-meta"><span id="result-count" aria-live="polite">正在读取题目…</span><span>按原分册顺序</span></div>
         <div id="question-list" class="question-list" aria-label="题目列表"></div>
       </aside>
       <section class="reading" aria-label="题目阅读区">
@@ -99,7 +99,7 @@
           <div class="practice-footer">
             <section class="answer-panel" id="answer-panel" aria-label="答案反馈" hidden>
               <div id="practice-feedback" class="practice-feedback" role="status" aria-live="polite" hidden></div>
-              <button class="text-button" id="reveal-answer" disabled>查看参考答案</button>
+              <button class="text-button" id="reveal-answer" disabled>查看官方答案</button>
               <div id="answer-result" hidden>
                 <div class="answer-letter" id="answer-letter"></div>
                 <div class="answer-syllabus" id="answer-syllabus"></div>
@@ -108,7 +108,7 @@
               </div>
             </section>
             <nav class="practice-nav" aria-label="换题">
-              <button class="primary-button" id="next" disabled>下一题</button>
+              <button class="primary-button" id="next" disabled>下一题 →</button>
               <button class="secondary-button" id="random-next" disabled>随机下一题</button>
               <button class="secondary-button" id="retry-question" hidden>重做本题</button>
               <button class="secondary-button" id="wrong-done" hidden>返回全部题目</button>
@@ -124,11 +124,11 @@
       </section>
       <aside class="inspector" aria-label="答案与考纲信息">
         <section class="info-card"><div class="card-heading"><h2>考纲分类</h2><span id="scope-badge" class="status-badge">现行考纲</span></div><div id="question-marks" class="question-marks"></div><div id="topic-list" class="topic-list"></div><p class="review-note" id="review-note"></p></section>
-        <section class="source-card"><h2>题目出处</h2><dl id="source-info"></dl><button id="report-question" type="button" class="text-button" hidden>报错</button><details><summary>查看稳定题目 ID</summary><code id="stable-id"></code></details><details><summary>来源文件与SHA-256</summary><pre id="source-trace"></pre></details></section>
+        <section class="source-card"><h2>题目出处</h2><dl id="source-info"></dl><button id="report-question" type="button" class="text-button" hidden>报错</button><details><summary>查看稳定题目 ID</summary><code id="stable-id"></code></details><details><summary>来源文件及页码</summary><pre id="source-trace"></pre></details></section>
         <p class="inspector-note" id="inspector-note">学习进度保存在当前浏览器。</p>
       </aside>
     </div>
-    <footer>采薇alevel物理课堂 <span>·</span> 网站试用版</footer>
+    <footer>采薇alevel物理课堂 <span>·</span> 网页题库</footer>
     </div>
     <section id="as-bank" class="empty-state bank-empty" aria-labelledby="as-bank-heading" hidden>
       <h2 id="as-bank-heading">9702 AS 物理题库准备中</h2>
@@ -190,7 +190,7 @@
   </dialog>
   <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="./questions.js" defer></script>
-<script src="./app.js" defer></script>
+<script src="./questions.js?v=d1ec653f1ceb8884" defer></script>
+<script src="./app.js?v=d1ec653f1ceb8884" defer></script>
 </body>
 </html>
