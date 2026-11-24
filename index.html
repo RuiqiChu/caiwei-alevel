@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="采薇alevel物理课堂。按考纲练习 9702 AS Paper 1 和 0625 IGCSE Paper 2。">
   <title>采薇alevel物理课堂</title>
-  <link rel="stylesheet" href="./style.css?v=1b2d2df3a5e4f42d">
+  <link rel="stylesheet" href="./style.css?v=1644a1c38b1e1941">
   
 
 
@@ -23,12 +23,12 @@
     <nav class="classroom-nav" aria-label="课堂栏目">
       <a href="./?bank=0625" data-site-bank="0625">IGCSE选择题</a>
       <a href="./?bank=9702-as" data-site-bank="9702-as">AS选择题</a>
-      <a href="./lab.html?v=1b2d2df3a5e4f42d">物理交互实验室</a>
+      <a href="./lab.html?v=1644a1c38b1e1941">物理交互实验室</a>
     </nav>
   </header>
   <main>
     <section class="intro">
-      <div><div class="eyebrow" id="current-bank-label">0625 IGCSE · PAPER 2</div><div class="title-line"><h1>采薇alevel物理课堂</h1><div class="author-links"><a class="author-link" href="https://space.bilibili.com/1313090027" target="_blank" rel="noopener noreferrer">B站作者主页 ↗</a><a id="github-project" class="author-link" href="https://github.com/RuiqiChu/caiwei-physics" target="_blank" rel="noopener noreferrer">GitHub 项目 ↗</a></div></div><div class="title-en" id="igcse-intro">按章节浏览 · 英文原题与官方答案</div></div>
+      <div><div class="eyebrow" id="current-bank-label">0625 IGCSE · PAPER 2</div><div class="title-line"><h1>采薇alevel物理课堂</h1><div class="author-links"><a class="author-link" href="https://space.bilibili.com/1313090027" target="_blank" rel="noopener noreferrer">B站作者主页 ↗</a><a id="github-project" class="author-link" href="https://github.com/RuiqiChu/caiwei-physics" target="_blank" rel="noopener noreferrer">GitHub 项目 ↗</a></div></div></div>
       <div class="syllabus-stamp" id="igcse-syllabus"><span>当前分类考纲</span><strong id="syllabus-version">2026–2028</strong><small>按现行考纲知识点分类</small></div>
     </section>
     <div id="igcse-bank">
@@ -44,15 +44,15 @@
       <div class="progress-body">
         <svg id="accuracy-chart" viewBox="0 0 328 252" role="group" aria-label="六章正确率雷达图"></svg>
         <div>
-          <p class="progress-method">按主考点所属考纲小节统计，正确率为答对次数 ÷ 作答次数，含复练。点选章节可查看小节。</p>
-          <ol id="chapter-accuracy" aria-label="各章正确率与答对次数"></ol>
+          <p class="progress-method">已答题数按题去重。正确率 =（已答题数 − 错题本题数）÷ 已答题数。点选章节可查看小节。</p>
+          <ol id="chapter-accuracy" aria-label="各章正确率与已答题数"></ol>
           <p id="appendix-progress" class="progress-method" hidden></p>
           <div class="progress-actions"><p id="progress-storage" class="progress-storage"></p><button id="reset-progress" type="button" disabled>重置学习记录</button></div>
         </div>
         <section id="section-accuracy-panel" class="section-accuracy-panel" aria-labelledby="section-accuracy-title" hidden>
           <div class="accuracy-detail-heading"><h3 id="section-accuracy-title" tabindex="-1"></h3><button id="close-accuracy-detail" class="text-button" type="button">收起小节</button></div>
           <label class="section-priority">抽题顺序 <select id="section-priority"><option value="unseen">未做题优先</option><option value="wrong">错题优先</option></select></label>
-          <ol id="section-accuracy" aria-label="各小节正确率与答对次数"></ol>
+          <ol id="section-accuracy" aria-label="各小节正确率与已答题数"></ol>
         </section>
       </div>
     </details>
@@ -126,16 +126,15 @@
               <div id="random-chapters" class="random-chapters"></div>
             </details>
           </div>
-          <div class="reader-footnote"><span class="dot"></span><span id="reader-footnote-text">电子题目可选择、复制；可随时切换原卷核对。</span></div>
         </div>
       </section>
       <aside class="inspector" aria-label="答案与考纲信息">
-        <section class="info-card"><div class="card-heading"><h2>考纲分类</h2><span id="scope-badge" class="status-badge">现行考纲</span></div><div id="question-marks" class="question-marks"></div><div id="topic-list" class="topic-list"></div><p class="review-note" id="review-note"></p></section>
+        <section class="info-card"><div class="card-heading"><h2>考纲分类</h2><span id="scope-badge" class="status-badge">现行考纲</span></div><div id="question-marks" class="question-marks"></div><div id="topic-list" class="topic-list"></div><p class="review-note" id="review-note" hidden></p></section>
         <section class="source-card"><h2>题目出处</h2><dl id="source-info"></dl><button id="report-question" type="button" class="text-button" hidden>报错</button></section>
         <p class="inspector-note" id="inspector-note">学习进度保存在当前浏览器。</p>
       </aside>
     </div>
-    <footer>采薇alevel物理课堂 <span>·</span> 网页题库</footer>
+    <footer>采薇alevel物理课堂</footer>
     </div>
     <section id="as-bank" class="empty-state bank-empty" aria-labelledby="as-bank-heading" hidden>
       <h2 id="as-bank-heading">9702 AS 物理题库准备中</h2>
@@ -186,7 +185,7 @@
   </dialog>
   <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="./questions.js?v=1b2d2df3a5e4f42d" defer></script>
-<script src="./app.js?v=1b2d2df3a5e4f42d" defer></script>
+<script src="./questions.js?v=1644a1c38b1e1941" defer></script>
+<script src="./app.js?v=1644a1c38b1e1941" defer></script>
 </body>
 </html>

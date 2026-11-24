@@ -646,7 +646,7 @@ function renderAccuracyRadar(chart,chapters,selected){
     const [x,y]=point(i,1);
     children.push(svg('line',{x1:center[0],y1:center[1],x2:x,y2:y,class:'radar-axis'}));
   }
-  const results=chapters.map((chapter,i)=>chapter.attempts?point(i,chapter.correct/chapter.attempts):null);
+  const results=chapters.map((chapter,i)=>chapter.answered?point(i,(chapter.answered-chapter.wrong)/chapter.answered):null);
   if(results.every(Boolean)){
     children.push(svg('polygon',{points:coordinates(results),class:'radar-area'}));
   }else{
@@ -670,7 +670,7 @@ function renderAccuracyRadar(chart,chapters,selected){
     const marker=results[i];
     if(marker){
       group.append(svg('circle',{cx:marker[0],cy:marker[1],r:4,class:'radar-point','data-chapter':chapter.number}));
-      if(chapter.correct)group.append(svg('circle',{cx:marker[0],cy:marker[1],r:10,class:'radar-hit-point'}));
+      if(chapter.answered>chapter.wrong)group.append(svg('circle',{cx:marker[0],cy:marker[1],r:10,class:'radar-hit-point'}));
     }
     children.push(group);
   }
@@ -689,10 +689,10 @@ function renderAccuracyRows(list,entries,selected){
     }
     name.textContent=entry.number?`${entry.number}. ${entry.name}`:`${entry.code} ${entry.name}`;
     const value=document.createElement('strong');
-    value.textContent=entry.attempts?`${Math.round(entry.correct/entry.attempts*100)}%`:'未作答';
-    value.classList.toggle('unattempted',!entry.attempts);
+    value.textContent=entry.answered?`${Math.round((entry.answered-entry.wrong)/entry.answered*100)}%`:'未作答';
+    value.classList.toggle('unattempted',!entry.answered);
     const count=document.createElement('small');
-    count.textContent=entry.attempts?`${entry.correct} / ${entry.attempts}`:'';
+    count.textContent=entry.answered?`${entry.answered-entry.wrong} / ${entry.answered}`:'';
     row.append(name,value,count);
     if(Object.hasOwn(entry,'size')){
       const details=document.createElement('div');
@@ -700,7 +700,7 @@ function renderAccuracyRows(list,entries,selected){
       const accuracy=(correct,total)=>total?`${Math.round(correct/total*100)}%（${correct}/${total}）`:'—';
       const history=document.createElement('span');
       history.className='section-attempt-summary';
-      history.textContent=`已练 ${entry.solved}/${entry.size} · 首答 ${accuracy(entry.firstCorrect,entry.firstAttempts)} · 复练 ${accuracy(entry.repeatCorrect,entry.repeats)}`;
+      history.textContent=`已练 ${entry.answered}/${entry.size} · 首答 ${accuracy(entry.firstCorrect,entry.firstAttempts)} · 复练 ${accuracy(entry.repeatCorrect,entry.repeats)}`;
       if(entry.unknownFirst){
         const old=document.createElement('small');
         old.textContent=`${entry.unknownFirst} 道旧题的首答顺序未知，仍计入总正确率。`;
@@ -1410,7 +1410,8 @@ function paintDetail(){
     button.innerHTML=`<span>${topic.topic_role==='PRIMARY'?'主考点':'次考点'} · ${escapeHtml(topic.reference_code)}</span><strong>${escapeHtml(topicSummary(topic.summary_cn))}</strong><small>考纲 PDF 第 ${topic.source_pdf_page} 页</small>`;
     $('topic-list').append(button);
   }
-  $('review-note').textContent=skip?d.evidence_note_cn:'分类及题面仍待教师独立复核。';
+  $('review-note').hidden=!skip;
+  $('review-note').textContent=skip?d.evidence_note_cn:'';
   $('source-info').innerHTML=`<dt>考季</dt><dd>${d.year} ${sessions[d.session_code]}</dd><dt>试卷</dt><dd>${d.question_id.slice(0,4)} / ${d.component_code}</dd><dt>原题号</dt><dd>Q${d.original_question_number}</dd>`;
   $('report-question').hidden=skip;
   $('inspector-note').hidden=!skip;
@@ -1499,20 +1500,19 @@ function wrongCount(){
   return count;
 }
 function paintProgress(){
-  const chapters=chapterNames.map((name,index)=>({name,number:index+1,attempts:0,correct:0}));
-  const sections=new Map([...syllabusSections].map(([code,name])=>[code,{code,name,attempts:0,correct:0,
-    size:sectionSizes.get(code)||0,solved:0,firstAttempts:0,firstCorrect:0,repeats:0,repeatCorrect:0,unknownFirst:0}]));
-  const appendix={attempts:0,correct:0};
+  const chapters=chapterNames.map((name,index)=>({name,number:index+1,answered:0,wrong:0}));
+  const sections=new Map([...syllabusSections].map(([code,name])=>[code,{code,name,answered:0,wrong:0,
+    size:sectionSizes.get(code)||0,firstAttempts:0,firstCorrect:0,repeats:0,repeatCorrect:0,unknownFirst:0}]));
+  const appendix={answered:0,wrong:0};
   let solved=0;
   for(const [id,record] of progress.records){
     if(!sectionsById.has(id))continue;
     solved++;
     const bucket=sections.get(sectionsById.get(id))||appendix;
-    bucket.attempts+=record.attempts;
-    bucket.correct+=record.correct;
+    bucket.answered++;
+    bucket.wrong+=Number(isInWrongBook(record));
     if(bucket!==appendix){
       const split=attemptBreakdown(record);
-      bucket.solved++;
       if(split.firstCorrect===null)bucket.unknownFirst++;
       else{
         bucket.firstAttempts++;bucket.firstCorrect+=Number(split.firstCorrect);
@@ -1522,16 +1522,16 @@ function paintProgress(){
   }
   for(const section of sections.values()){
     const chapter=chapters[Number(section.code.split('.')[0])-1];
-    chapter.attempts+=section.attempts;
-    chapter.correct+=section.correct;
+    chapter.answered+=section.answered;
+    chapter.wrong+=section.wrong;
   }
   const storageNote=progress.persistent?'进度保存在当前浏览器。':'此浏览器暂时无法保存进度，记录仅保留在本次页面。';
   $('progress-storage').textContent=storageNote;
   $('storage-status').hidden=progress.persistent;
   $('wrong-count').textContent=wrongCount();
   $('progress-summary').textContent=`已做 ${solved} 题`;
-  $('appendix-progress').hidden=!appendix.attempts;
-  $('appendix-progress').textContent=`附录等独立考点 · 答对 / 作答 ${appendix.correct} / ${appendix.attempts}`;
+  $('appendix-progress').hidden=!appendix.answered;
+  $('appendix-progress').textContent=`附录等独立考点 · 已答且不在错题本 / 已答 ${appendix.answered-appendix.wrong} / ${appendix.answered}`;
   $('reset-progress').disabled=!allQuestions;
   const activeChapters=asPage?chapters.filter(chapter=>
     [...sections.keys()].some(code=>code.startsWith(chapter.number+'.'))):chapters;
@@ -1587,7 +1587,6 @@ function progressChanged(id,reset=false,studyChanged=false,preferencesChanged=fa
 function paintPreferences(){
   const asEmpty=!asAvailable&&(asPage||progress.preferences.bank==='9702-as');
   $('current-bank-label').textContent=asEmpty?'9702 AS · PHYSICS':asPage?'9702 AS · PAPER 1':'0625 IGCSE · PAPER 2';
-  $('igcse-intro').hidden=asEmpty;
   $('igcse-syllabus').hidden=asEmpty;
   $('igcse-bank').hidden=asEmpty;
   $('as-bank').hidden=!asEmpty;
@@ -1618,7 +1617,6 @@ function showDocument(){
   $('reader').classList.add('is-electronic');$('electronic-question').hidden=false;
   $('page-loading').hidden=true;$('page-error').hidden=true;$('page-sheet').hidden=true;
   $('page-caption').textContent='电子题目 · 文本、公式及原卷矢量排版';
-  $('reader-footnote-text').textContent='个人练习记录保存在当前浏览器。题面及分类待教师独立复核。';
   renderElectronic(state.detail.electronic_content.body);applyZoom();$('reader').scrollTo({top:0,left:0});
 }
 function focusQuestion(){}
@@ -1851,7 +1849,6 @@ async function init(){
     if(asPage){
       $('progress-label').textContent='学习进度 · 章节正确率';
       $('accuracy-chart').setAttribute('aria-label','AS 章节正确率雷达图');
-      $('igcse-intro').textContent='按考纲浏览 · 英文原题与官方答案';
       $('paper-count').value=Math.min(catalogue.items.length,40);
       $('paper-minutes').value=Math.ceil(Number($('paper-count').value)*75/40);
     }
