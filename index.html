@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="采薇alevel物理课堂。按考纲练习 9702 AS Paper 1 和 0625 IGCSE Paper 2。">
   <title>采薇alevel物理课堂</title>
-  <link rel="stylesheet" href="./style.css?v=1644a1c38b1e1941">
+  <link rel="stylesheet" href="./style.css?v=ab9d42aa0f3f6bd1">
   
 
 
@@ -23,7 +23,7 @@
     <nav class="classroom-nav" aria-label="课堂栏目">
       <a href="./?bank=0625" data-site-bank="0625">IGCSE选择题</a>
       <a href="./?bank=9702-as" data-site-bank="9702-as">AS选择题</a>
-      <a href="./lab.html?v=1644a1c38b1e1941">物理交互实验室</a>
+      <a href="./lab.html?v=ab9d42aa0f3f6bd1">物理交互实验室</a>
     </nav>
   </header>
   <main>
@@ -44,15 +44,15 @@
       <div class="progress-body">
         <svg id="accuracy-chart" viewBox="0 0 328 252" role="group" aria-label="六章正确率雷达图"></svg>
         <div>
-          <p class="progress-method">已答题数按题去重。正确率 =（已答题数 − 错题本题数）÷ 已答题数。点选章节可查看小节。</p>
-          <ol id="chapter-accuracy" aria-label="各章正确率与已答题数"></ol>
+          <p class="progress-method" id="progress-method">正确率 = 答对次数 ÷ 作答次数，含复练。点选章节可查看小节。</p>
+          <ol id="chapter-accuracy" aria-label="各章正确率与答对次数"></ol>
           <p id="appendix-progress" class="progress-method" hidden></p>
           <div class="progress-actions"><p id="progress-storage" class="progress-storage"></p><button id="reset-progress" type="button" disabled>重置学习记录</button></div>
         </div>
         <section id="section-accuracy-panel" class="section-accuracy-panel" aria-labelledby="section-accuracy-title" hidden>
           <div class="accuracy-detail-heading"><h3 id="section-accuracy-title" tabindex="-1"></h3><button id="close-accuracy-detail" class="text-button" type="button">收起小节</button></div>
           <label class="section-priority">抽题顺序 <select id="section-priority"><option value="unseen">未做题优先</option><option value="wrong">错题优先</option></select></label>
-          <ol id="section-accuracy" aria-label="各小节正确率与已答题数"></ol>
+          <ol id="section-accuracy" aria-label="各小节正确率与答对次数"></ol>
         </section>
       </div>
     </details>
@@ -86,7 +86,7 @@
     <div class="workspace" id="workspace">
       <aside class="library">
         <div class="library-top"><h2>题目目录</h2><button class="text-button" id="reset-filters">重置筛选</button></div>
-        <div class="list-tabs" role="group" aria-label="题目状态"><button id="included-tab" class="active" aria-pressed="true">全部题目 <span id="included-count">—</span></button><button id="wrong-tab" aria-pressed="false">错题本 <span id="wrong-count">0</span></button><button id="skipped-tab" aria-pressed="false">旧考纲 / 跳过 <span id="skipped-count">—</span></button></div>
+        <div class="list-tabs" role="group" aria-label="题目状态"><button id="included-tab" class="active" aria-pressed="true">全部题目 <span id="included-count">—</span></button><button id="wrong-tab" aria-pressed="false">错题本 <span id="wrong-count">0</span></button><button id="notes-tab" aria-pressed="false">有笔记题目</button><button id="favorites-tab" aria-pressed="false" hidden>收藏题目</button><button id="skipped-tab" aria-pressed="false">旧考纲 / 跳过 <span id="skipped-count">—</span></button></div>
         <label class="check-filter wrong-book-preference" id="wrong-book-preference" hidden>
           <input id="remove-correct-questions" type="checkbox" checked>答对后自动移出错题本
         </label>
@@ -114,7 +114,32 @@
                 <div class="answer-actions"><button class="text-button" id="view-ms">查看评分标准原页 →</button><button class="text-button" id="hide-answer">收起答案</button></div>
               </div>
             </section>
+            <details id="question-notes" class="practice-tool" hidden>
+              <summary>我的笔记</summary>
+              <form id="question-note-form">
+                <label class="sr-only" for="question-note-text">本题笔记</label>
+                <textarea id="question-note-text" rows="4" maxlength="4000" placeholder="记录本题的想法"></textarea>
+                <div class="practice-tool-actions">
+                  <button type="submit" class="secondary-button">保存笔记</button>
+                  <span id="question-note-status" role="status"></span>
+                </div>
+              </form>
+            </details>
+            <section id="difficulty-rating" class="practice-tool" aria-label="难度评分" hidden>
+              <div class="practice-tool-actions">
+                <span>难度评分</span>
+                <div id="difficulty-buttons" class="difficulty-buttons" role="group" aria-label="1 分最简单，5 分最难">
+                  <button type="button" value="1" aria-pressed="false" aria-label="1 分，最简单">1</button>
+                  <button type="button" value="2" aria-pressed="false" aria-label="2 分">2</button>
+                  <button type="button" value="3" aria-pressed="false" aria-label="3 分">3</button>
+                  <button type="button" value="4" aria-pressed="false" aria-label="4 分">4</button>
+                  <button type="button" value="5" aria-pressed="false" aria-label="5 分，最难">5</button>
+                </div>
+                <span id="difficulty-summary" role="status"></span>
+              </div>
+            </section>
             <nav class="practice-nav" aria-label="换题">
+              <button id="favorite-question" type="button" class="secondary-button" aria-pressed="false" hidden>收藏题目</button>
               <button class="primary-button" id="next" disabled>下一题 →</button>
               <button class="secondary-button" id="random-next" disabled>随机下一题</button>
               <button class="secondary-button" id="retry-question" hidden>重做本题</button>
@@ -134,7 +159,7 @@
         <p class="inspector-note" id="inspector-note">学习进度保存在当前浏览器。</p>
       </aside>
     </div>
-    <footer>采薇alevel物理课堂</footer>
+    <footer>采薇alevel物理课堂 <button id="test-mode-toggle" type="button" class="text-button">测试版</button></footer>
     </div>
     <section id="as-bank" class="empty-state bank-empty" aria-labelledby="as-bank-heading" hidden>
       <h2 id="as-bank-heading">9702 AS 物理题库准备中</h2>
@@ -172,6 +197,17 @@
     </form>
   </dialog>
   <section id="printed-paper" hidden></section>
+  <dialog id="test-mode-dialog" class="study-dialog" aria-labelledby="test-mode-title">
+    <form id="test-mode-form">
+      <h2 id="test-mode-title">进入测试版</h2>
+      <label>测试密码 <input id="test-password" type="password" required autofocus></label>
+      <p id="test-mode-error" role="alert" hidden>密码不正确。</p>
+      <div class="study-dialog-actions">
+        <button id="test-mode-close" type="button" class="secondary-button">取消</button>
+        <button type="submit" class="primary-button">进入</button>
+      </div>
+    </form>
+  </dialog>
   <dialog id="progress-reset-dialog" aria-labelledby="progress-reset-title" aria-describedby="progress-reset-description">
     <form id="progress-reset-form">
       <h2 id="progress-reset-title">重置学习记录</h2>
@@ -185,7 +221,7 @@
   </dialog>
   <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="./questions.js?v=1644a1c38b1e1941" defer></script>
-<script src="./app.js?v=1644a1c38b1e1941" defer></script>
+<script src="./questions.js?v=ab9d42aa0f3f6bd1" defer></script>
+<script src="./app.js?v=ab9d42aa0f3f6bd1" defer></script>
 </body>
 </html>

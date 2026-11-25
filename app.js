@@ -700,7 +700,7 @@ function renderAccuracyRows(list,entries,selected){
       const accuracy=(correct,total)=>total?`${Math.round(correct/total*100)}%（${correct}/${total}）`:'—';
       const history=document.createElement('span');
       history.className='section-attempt-summary';
-      history.textContent=`已练 ${entry.answered}/${entry.size} · 首答 ${accuracy(entry.firstCorrect,entry.firstAttempts)} · 复练 ${accuracy(entry.repeatCorrect,entry.repeats)}`;
+      history.textContent=`已练 ${entry.solved}/${entry.size} · 首答 ${accuracy(entry.firstCorrect,entry.firstAttempts)} · 复练 ${accuracy(entry.repeatCorrect,entry.repeats)}`;
       if(entry.unknownFirst){
         const old=document.createElement('small');
         old.textContent=`${entry.unknownFirst} 道旧题的首答顺序未知，仍计入总正确率。`;
@@ -1174,6 +1174,238 @@ let allQuestions,sectionsById=new Map(),syllabusSections=new Map(),expandedChapt
 let sectionSizes=new Map(),studyController;
 let toastTimer,searchTimer,randomRequest=false,asAvailable=false;
 
+function createPracticeTools({getQuestion, onCollectionChange, onModeChange, notify, ratingEndpoint}) {
+  const prefix = 'caiwei-physics:practice:';
+  const testKey = prefix + 'test-mode';
+  const ratings = new Map();
+  let testMode = false;
+  let questionId = null;
+  let ratingId = null;
+  let voterId = null;
+  try { testMode = sessionStorage.getItem(testKey) === '1'; } catch {}
+
+  function read(key) {
+    try { return localStorage.getItem(prefix + key); } catch { return null; }
+  }
+
+  function save(key, value) {
+    try {
+      if (value === null) localStorage.removeItem(prefix + key);
+      else localStorage.setItem(prefix + key, value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  const hasNote = id => read('note:' + id) !== null;
+  const isFavorite = id => read('favorite:' + id) === '1';
+  const voteButtons = [...$('difficulty-buttons').querySelectorAll('button')];
+
+  function getVoterId() {
+    if (!voterId) voterId = read('voter');
+    if (!voterId) {
+      const id = crypto.randomUUID();
+      if (!save('voter', id)) throw new Error('浏览器无法保存匿名评分编号。');
+      voterId = id;
+    }
+    return voterId;
+  }
+
+  async function sendRating(id, score) {
+    const url = new URL(ratingEndpoint, location.href);
+    url.searchParams.set('question', id);
+    url.searchParams.set('voter', getVoterId());
+    const options = {cache: 'no-store', signal: AbortSignal.timeout(10000)};
+    if (score !== undefined) {
+      options.method = 'PUT';
+      options.headers = {'Content-Type': 'application/json'};
+      options.body = JSON.stringify({score});
+    }
+    const response = await fetch(url, options);
+    if (!response.ok) throw new Error('评分服务暂时不可用。');
+    return response.json();
+  }
+
+  function paintRatings(id) {
+    const entry = ratings.get(id);
+    for (const button of voteButtons) {
+      button.disabled = Boolean(entry?.saving || entry?.loading);
+      button.setAttribute('aria-pressed', String(Number(button.value) === entry?.myScore));
+    }
+    const label = $('difficulty-summary');
+    if (entry?.message) label.textContent = entry.message;
+    else if (!ratingEndpoint) {
+      label.textContent = entry?.myScore
+        ? `本机试评 · 已选 ${entry.myScore} / 5`
+        : '本机试评 · 评分汇总尚未接通';
+    } else if (entry?.loading) label.textContent = '正在读取评分…';
+    else if (entry?.count) label.textContent = `平均难度 ${entry.average.toFixed(1)} / 5 · ${entry.count} 人评分`;
+    else label.textContent = '暂无评分';
+  }
+
+  async function loadRating(id) {
+    const entry = {loading: true};
+    ratings.set(id, entry);
+    try {
+      Object.assign(entry, await sendRating(id));
+    } catch {
+      entry.message = '暂时无法读取评分，可以直接提交评分。';
+    } finally {
+      entry.loading = false;
+      if (ratingId === id) paintRatings(id);
+    }
+  }
+
+  async function vote(id, score) {
+    const entry = ratings.get(id) || {};
+    if (entry.saving || entry.loading) return;
+    if (!ratingEndpoint) {
+      if (save('rating:' + id, String(score))) entry.myScore = score;
+      else entry.message = '浏览器无法保存试评分。';
+      ratings.set(id, entry);
+      paintRatings(id);
+      return;
+    }
+    entry.saving = true;
+    entry.message = '';
+    ratings.set(id, entry);
+    paintRatings(id);
+    try {
+      Object.assign(entry, await sendRating(id, score));
+    } catch {
+      entry.message = '评分保存失败，请重试。';
+    } finally {
+      entry.saving = false;
+      if (ratingId === id) paintRatings(id);
+    }
+  }
+
+  function paint() {
+    const {id, answered, openNote} = getQuestion();
+    const noteVisible = id && (answered || hasNote(id));
+    $('question-notes').hidden = !noteVisible;
+    if (id !== questionId) {
+      $('question-note-text').value = id ? read('note:' + id) || '' : '';
+      $('question-notes').open = Boolean(openNote);
+      $('question-note-status').textContent = '';
+      questionId = id;
+    }
+    const favorite = $('favorite-question');
+    favorite.hidden = !(id && testMode);
+    favorite.textContent = isFavorite(id) ? '取消收藏' : '收藏题目';
+    favorite.setAttribute('aria-pressed', String(isFavorite(id)));
+
+    const nextRating = answered ? id : null;
+    $('difficulty-rating').hidden = !nextRating;
+    if (nextRating && ratingId !== nextRating) {
+      if (ratingEndpoint) {
+        const entry = ratings.get(nextRating);
+        if (!entry?.loading && !entry?.saving) void loadRating(nextRating);
+      } else {
+        const score = Number(read('rating:' + nextRating));
+        ratings.set(nextRating, {myScore: score || null});
+      }
+      paintRatings(nextRating);
+    }
+    ratingId = nextRating;
+  }
+
+  function setTestMode(enabled) {
+    testMode = enabled;
+    try {
+      if (enabled) sessionStorage.setItem(testKey, '1');
+      else sessionStorage.removeItem(testKey);
+    } catch {}
+    $('test-mode-toggle').textContent = enabled ? '退出测试版' : '测试版';
+    $('favorites-tab').hidden = !enabled;
+    onModeChange(enabled);
+    paint();
+  }
+
+  $('test-mode-toggle').textContent = testMode ? '退出测试版' : '测试版';
+  $('favorites-tab').hidden = !testMode;
+  $('test-mode-toggle').addEventListener('click', () => {
+    if (testMode) {
+      setTestMode(false);
+      return;
+    }
+    $('test-password').value = '';
+    $('test-mode-error').hidden = true;
+    $('test-mode-dialog').showModal();
+  });
+  $('test-mode-close').addEventListener('click', () => $('test-mode-dialog').close());
+  $('test-mode-form').addEventListener('submit', event => {
+    event.preventDefault();
+    if ($('test-password').value !== 'glgjssyqyhfbqz') {
+      $('test-mode-error').hidden = false;
+      $('test-password').focus();
+      return;
+    }
+    $('test-mode-dialog').close();
+    setTestMode(true);
+  });
+  $('question-note-form').addEventListener('submit', event => {
+    event.preventDefault();
+    if (!questionId || $('question-notes').hidden) return;
+    const note = $('question-note-text').value.trim();
+    if (!save('note:' + questionId, note || null)) {
+      $('question-note-status').textContent = '笔记保存失败。';
+      return;
+    }
+    $('question-note-status').textContent = note ? '已保存' : '已清空';
+    onCollectionChange();
+  });
+  $('favorite-question').addEventListener('click', () => {
+    if (!testMode || !questionId) return;
+    const value = isFavorite(questionId) ? null : '1';
+    if (!save('favorite:' + questionId, value)) {
+      notify('收藏保存失败。');
+      return;
+    }
+    paint();
+    onCollectionChange();
+  });
+  voteButtons.forEach(button => button.addEventListener('click', () => {
+    if (ratingId) void vote(ratingId, Number(button.value));
+  }));
+  window.addEventListener('storage', event => {
+    if (event.key?.startsWith(prefix + 'note:') || event.key?.startsWith(prefix + 'favorite:')) {
+      if (event.key === prefix + 'note:' + questionId && document.activeElement !== $('question-note-text')) {
+        $('question-note-text').value = read('note:' + questionId) || '';
+      }
+      paint();
+      onCollectionChange();
+    }
+  });
+
+  return {paint, hasNote, isFavorite, testMode: () => testMode};
+}
+
+
+const practiceViews=['included','wrong','notes','favorites','skipped'];
+const collectionLabels={wrong:'错题本',notes:'有笔记题目',favorites:'收藏题目'};
+const configuredRatingEndpoint=null;
+const useLocalRatingDemo=location.protocol==='file:'||location.hostname.endsWith('.github.io');
+const practiceTools=createPracticeTools({
+  getQuestion:()=>{
+    const id=canPractice()?state.detail.question_id:null;
+    return {id,answered:Boolean(id&&(state.choice!==null||progress.records.has(id))),openNote:state.view==='notes'};
+  },
+  onCollectionChange:()=>{
+    if(state.view==='notes'||state.view==='favorites'){
+      if(!state.selected||!visibleInDirectory({question_id:state.selected}))void loadList({remember:false});
+      else{renderDirectory();paintNavigation();}
+    }
+  },
+  onModeChange:enabled=>{
+    if(allQuestions)paintProgress();
+    if(!enabled&&state.view==='favorites')showView('included');
+  },
+  notify:toast,
+  ratingEndpoint:configuredRatingEndpoint||(useLocalRatingDemo?null:'/api/ratings'),
+});
+
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,4500);}
 // GitHub Pages adapter: use the static catalogue and fetch question details by chapter.
 const offlineData=webCatalogue;
@@ -1282,7 +1514,7 @@ function clearFilters(){
   $('search').value='';$('year-filter').value='';$('chapter-filter').value='';$('primary-filter').checked=false;
 }
 function showView(view){
-  if(view!==state.view&&(view==='wrong'||state.view==='wrong'))clearFilters();
+  if(view!==state.view&&(collectionLabels[view]||collectionLabels[state.view]))clearFilters();
   state.view=view;
   if(view==='skipped')state.selected=null;
   else state.selected=state.detail?.status==='included'?state.selected:progress.lastId;
@@ -1290,7 +1522,7 @@ function showView(view){
 }
 function updateViewButtons(){
   const skip=state.view==='skipped';
-  for(const view of ['included','wrong','skipped']){
+  for(const view of practiceViews){
     const active=state.view===view;
     $(view+'-tab').classList.toggle('active',active);
     $(view+'-tab').setAttribute('aria-pressed',String(active));
@@ -1300,7 +1532,11 @@ function updateViewButtons(){
   updateRandomCount();
 }
 function isWrong(id){return isInWrongBook(progress.records.get(id));}
-function visibleInDirectory(item){return state.view!=='wrong'||isWrong(item.question_id);}
+function visibleInDirectory(item){
+  if(state.view==='notes')return practiceTools.hasNote(item.question_id);
+  if(state.view==='favorites')return practiceTools.testMode()&&practiceTools.isFavorite(item.question_id);
+  return state.view!=='wrong'||isWrong(item.question_id);
+}
 
 async function loadList({scroll=false,remember=true}={}){
   const sequence=++state.listSequence;
@@ -1360,13 +1596,13 @@ function paintRowProgress(button){
   button.setAttribute('aria-label',button.dataset.label+(badge.hidden?'':'，'+badge.textContent));
 }
 function showEmptyState(empty){
-  const noWrong=state.view==='wrong'&&!wrongCount();
+  const emptyCollection=allQuestions&&!allQuestions.some(visibleInDirectory)?collectionLabels[state.view]:null;
   $('empty-state').hidden=!empty;
   $('question-content').hidden=empty;
   $('inspector-note').closest('.inspector').hidden=empty;
-  $('empty-title').textContent=noWrong?'错题本已清空':'没有找到符合条件的题目';
-  $('empty-help').textContent=noWrong?'答错的题会自动加入错题本。':'可以调整年份、章节，或清空搜索条件。';
-  $('empty-reset').textContent=noWrong?'返回全部题目':'重置筛选';
+  $('empty-title').textContent=emptyCollection?(state.view==='wrong'?'错题本已清空':`${emptyCollection}暂无记录`):'没有找到符合条件的题目';
+  $('empty-help').textContent=emptyCollection?(state.view==='wrong'?'答错的题会自动加入错题本。':''):'可以调整年份、章节，或清空搜索条件。';
+  $('empty-reset').textContent=emptyCollection?'返回全部题目':'重置筛选';
 }
 
 async function selectQuestion(id,{scroll=false,remember=true}={}){
@@ -1434,7 +1670,7 @@ function paintNavigation(){
   $('question-position').textContent=position;
   $('previous').disabled=!neighbour(-1);
   $('next').disabled=!neighbour(1);
-  $('random-next').disabled=randomRequest||(state.view==='wrong'&&!state.items.length&&!wrongCount());
+  $('random-next').disabled=randomRequest||Boolean(collectionLabels[state.view]&&!allQuestions?.some(visibleInDirectory));
   $('wrong-done').hidden=!(state.view==='wrong'&&index<0&&!wrongCount());
 }
 
@@ -1465,11 +1701,11 @@ function buildRandomRanges(chapters,titles){
 function selectedRanges(){return [...$('random-chapters').querySelectorAll('input[data-count]:checked')];}
 function updateRandomCount(){
   const ranges=selectedRanges();
-  const inWrongBook=state.view==='wrong';
+  const collection=collectionLabels[state.view];
   $('random-summary').textContent=ranges.length
-    ? `随机范围 · ${ranges.length} 小节${inWrongBook?'':` / ${ranges.reduce((total,input)=>total+Number(input.dataset.count),0)} 题`}`
-    : `随机范围 · ${inWrongBook?'全部错题':'全部章节'}`;
-  $('random-help').textContent=inWrongBook?'在错题本内按所选分册抽题。':'按题目分册抽取，未勾选时从全库抽题。';
+    ? `随机范围 · ${ranges.length} 小节${collection?'':` / ${ranges.reduce((total,input)=>total+Number(input.dataset.count),0)} 题`}`
+    : `随机范围 · ${collection||'全部章节'}`;
+  $('random-help').textContent=collection?`在「${collection}」内按所选分册抽题。`:'按题目分册抽取，未勾选时从全库抽题。';
 }
 async function chooseRandom(){
   if(randomRequest||!allQuestions)return;
@@ -1500,18 +1736,20 @@ function wrongCount(){
   return count;
 }
 function paintProgress(){
+  const byAttempts=!practiceTools.testMode();
   const chapters=chapterNames.map((name,index)=>({name,number:index+1,answered:0,wrong:0}));
   const sections=new Map([...syllabusSections].map(([code,name])=>[code,{code,name,answered:0,wrong:0,
-    size:sectionSizes.get(code)||0,firstAttempts:0,firstCorrect:0,repeats:0,repeatCorrect:0,unknownFirst:0}]));
+    size:sectionSizes.get(code)||0,solved:0,firstAttempts:0,firstCorrect:0,repeats:0,repeatCorrect:0,unknownFirst:0}]));
   const appendix={answered:0,wrong:0};
   let solved=0;
   for(const [id,record] of progress.records){
     if(!sectionsById.has(id))continue;
     solved++;
     const bucket=sections.get(sectionsById.get(id))||appendix;
-    bucket.answered++;
-    bucket.wrong+=Number(isInWrongBook(record));
+    bucket.answered+=byAttempts?record.attempts:1;
+    bucket.wrong+=byAttempts?record.attempts-record.correct:Number(isInWrongBook(record));
     if(bucket!==appendix){
+      bucket.solved++;
       const split=attemptBreakdown(record);
       if(split.firstCorrect===null)bucket.unknownFirst++;
       else{
@@ -1525,13 +1763,16 @@ function paintProgress(){
     chapter.answered+=section.answered;
     chapter.wrong+=section.wrong;
   }
+  $('progress-method').textContent=byAttempts
+    ? '正确率 = 答对次数 ÷ 作答次数，含复练。点选章节可查看小节。'
+    : '已答题数按题去重。正确率 =（已答题数 − 错题本题数）÷ 已答题数。点选章节可查看小节。';
   const storageNote=progress.persistent?'进度保存在当前浏览器。':'此浏览器暂时无法保存进度，记录仅保留在本次页面。';
   $('progress-storage').textContent=storageNote;
   $('storage-status').hidden=progress.persistent;
   $('wrong-count').textContent=wrongCount();
   $('progress-summary').textContent=`已做 ${solved} 题`;
   $('appendix-progress').hidden=!appendix.answered;
-  $('appendix-progress').textContent=`附录等独立考点 · 已答且不在错题本 / 已答 ${appendix.answered-appendix.wrong} / ${appendix.answered}`;
+  $('appendix-progress').textContent=`附录等独立考点 · ${byAttempts?'答对 / 作答':'已答且不在错题本 / 已答'} ${appendix.answered-appendix.wrong} / ${appendix.answered}`;
   $('reset-progress').disabled=!allQuestions;
   const activeChapters=asPage?chapters.filter(chapter=>
     [...sections.keys()].some(code=>code.startsWith(chapter.number+'.'))):chapters;
@@ -1562,6 +1803,7 @@ function paintQuestionProgress(){
   chip.textContent=record?`最近一次${record.lastCorrect?'答对':'答错'} · 选 ${record.lastOption}`:'';
   chip.classList.toggle('wrong',record?.lastCorrect===false);
   $('retry-question').hidden=!(state.choice!==null&&(state.view!=='wrong'||isWrong(state.selected)));
+  practiceTools.paint();
 }
 function progressChanged(id,reset=false,studyChanged=false,preferencesChanged=false){
   if(preferencesChanged){paintPreferences();return;}
@@ -1740,6 +1982,7 @@ function resetPractice(){
   $('reveal-answer').disabled=!ready;$('reveal-answer').hidden=!ready;$('answer-panel').hidden=!ready;
   $('retry-question').hidden=true;
   paintChoices();
+  practiceTools.paint();
 }
 function paintChoices(){
   const ready=canPractice();
@@ -1773,11 +2016,11 @@ function showAnswer(){
   $('answer-source').textContent=examSource(d);
 }
 
-for(const view of ['included','wrong','skipped'])$(view+'-tab').addEventListener('click',()=>showView(view));
+for(const view of practiceViews)$(view+'-tab').addEventListener('click',()=>showView(view));
 for(const id of ['year-filter','primary-filter','chapter-filter'])$(id).addEventListener('change',loadList);
 $('search').addEventListener('input',()=>{clearTimeout(searchTimer);searchTimer=setTimeout(loadList,180);});
 $('reset-filters').addEventListener('click',reset);
-$('empty-reset').addEventListener('click',()=>state.view==='wrong'&&!wrongCount()?showView('included'):reset());
+$('empty-reset').addEventListener('click',()=>collectionLabels[state.view]&&allQuestions&&!allQuestions.some(visibleInDirectory)?showView('included'):reset());
 $('wrong-done').addEventListener('click',()=>showView('included'));
 for(const [id,direction] of [['previous',-1],['next',1]])$(id).addEventListener('click',()=>{
   const item=neighbour(direction);if(item)selectQuestion(item.question_id,{scroll:id==='next'});
