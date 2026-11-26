@@ -1173,7 +1173,9 @@ const chemistryBanks = {'0620':'0620 IGCSE 化学 · Paper 2','9701-as':'9701 AS
 const requestedBank = new URLSearchParams(location.search).get('bank');
 const chemistryPage = Object.hasOwn(chemistryBanks,requestedBank);
 const pageBank = chemistryPage?requestedBank:asPage?'9702-as':'0625';
-document.querySelector(`[data-site-bank="${pageBank}"]`).setAttribute('aria-current', 'page');
+const bankLink = document.querySelector(`[data-site-bank="${pageBank}"]`);
+bankLink.setAttribute('aria-current','page');
+bankLink.closest('details').open=true;
 const asPaper = asPage||pageBank==='9701-as';
 let chapterNames = asPage
   ? ['物理量和单位','运动学','动力学','力、密度和压强','功、能量和功率','固体形变','波','叠加','电学','直流电路','粒子物理']

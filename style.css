@@ -216,16 +216,25 @@ main{max-width:1690px;margin:0 auto;padding:0 42px}.intro{display:flex;justify-c
 
 .classroom-topbar {
   gap: 16px;
+  height: auto;
+  min-height: 82px;
+  padding-block: 12px;
 }
 
 .classroom-nav {
   display: flex;
-  flex-wrap: wrap;
+  position: relative;
   gap: 6px;
   margin-inline-end: auto;
+  min-width: 290px;
 }
 
-.classroom-nav a {
+.classroom-nav:has(details[open]) {
+  padding-block-end: 42px;
+}
+
+.classroom-nav summary,
+.classroom-subnav a {
   display: inline-flex;
   align-items: center;
   min-height: 40px;
@@ -236,14 +245,57 @@ main{max-width:1690px;margin:0 auto;padding:0 42px}.intro{display:flex;justify-c
   white-space: nowrap;
 }
 
-.classroom-nav a:hover,
-.classroom-nav a[aria-current="page"] {
+.classroom-nav summary {
+  cursor: pointer;
+  gap: 8px;
+}
+
+.classroom-nav summary::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border: solid currentColor;
+  border-width: 0 1px 1px 0;
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.classroom-nav details[open] summary::after {
+  transform: translateY(1px) rotate(225deg);
+}
+
+.classroom-nav summary:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.classroom-nav summary:hover,
+.classroom-nav details[open] summary,
+.classroom-nav details:has(a[aria-current="page"]) summary,
+.classroom-subnav a:hover,
+.classroom-subnav a[aria-current="page"] {
   background: var(--green-wash);
   color: var(--green-dark);
 }
 
-.classroom-nav a[aria-current="page"] {
+.classroom-subnav {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: flex;
+  gap: 6px;
+}
+
+.classroom-nav details:not([open]) .classroom-subnav {
+  display: none;
+}
+
+.classroom-subnav a[aria-current="page"] {
   box-shadow: inset 0 -2px var(--green);
+}
+
+.subject-availability {
+  margin: 0 0 48px;
+  color: var(--muted);
 }
 
 .wrong-book-preference {
@@ -289,10 +341,12 @@ main{max-width:1690px;margin:0 auto;padding:0 42px}.intro{display:flex;justify-c
   .classroom-nav {
     order: 1;
     flex-basis: 100%;
+    min-width: 0;
     gap: 4px;
   }
 
-  .classroom-nav a {
+  .classroom-nav summary,
+  .classroom-subnav a {
     padding-inline: 8px;
     font-size: 13px;
   }
