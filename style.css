@@ -252,6 +252,32 @@ main{max-width:1690px;margin:0 auto;padding:0 42px}.intro{display:flex;justify-c
   font-size: 12px;
 }
 
+.classroom-acknowledgements {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 26px 20px 48px;
+  min-height: 150px;
+  border-top: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.classroom-acknowledgements h2 {
+  margin: 0 0 12px;
+  color: var(--green-dark);
+  font-size: 16px;
+}
+
+.classroom-acknowledgements ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 @media (max-width: 850px) {
   .classroom-topbar {
     height: auto;
