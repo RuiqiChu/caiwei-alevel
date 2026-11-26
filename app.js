@@ -327,7 +327,7 @@ const practiceStore = 'practice';
 const asPracticeStore = 'practice-9702-as';
 const preferenceStore = 'preferences';
 const preferenceKey = 'interface';
-const bankStores = {'0625':practiceStore,'9702-as':asPracticeStore,'0620':'practice-0620','9701-as':'practice-9701-as'};
+const bankStores = {'0625':practiceStore,'9702-as':asPracticeStore,'0620':'practice-0620','9701-as':'practice-9701-as','0455':'practice-0455'};
 const defaultPreferences = Object.freeze({bank:'9702-as',removeCorrect:true,revision:0});
 const resumeKey = 'last-question';
 const resetKey = 'reset-generation';
@@ -361,7 +361,7 @@ function openProgressDatabase(name){
   return new Promise((resolve,reject)=>{
     let timedOut=false;
     let blockedTimer;
-    const request=indexedDB.open(name,6);
+    const request=indexedDB.open(name,7);
     request.onupgradeneeded=event=>{
       // Keep version 1 records. The reset marker is added only when resetting.
       if(!event.oldVersion)request.result.createObjectStore(practiceStore,{keyPath:'id'});
@@ -371,6 +371,7 @@ function openProgressDatabase(name){
         request.result.createObjectStore(bankStores['0620'],{keyPath:'id'});
         request.result.createObjectStore(bankStores['9701-as'],{keyPath:'id'});
       }
+      if(event.oldVersion<7)request.result.createObjectStore(bankStores['0455'],{keyPath:'id'});
     };
     request.onsuccess=()=>{
       clearTimeout(blockedTimer);
@@ -736,9 +737,10 @@ function buildPrintPaper(target,questions,minutes,answerKey){
   const timing=`${minutes} minute${minutes===1?'':'s'}`;
   const code=questions[0].question_id.slice(0,4);
   const asPaper=code.startsWith('97');
-  const subject=['0620','9701'].includes(code)?'Chemistry':'Physics';
+  const subject=code==='0455'?'Economics':['0620','9701'].includes(code)?'Chemistry':'Physics';
+  const paperNumber=questions[0].question_id.split('-')[3][0];
   header.append(element('h1',`${asPaper?'AS':'IGCSE'} ${subject} ${code}`),
-    element('p',`Paper ${asPaper?1:2} Practice · ${questionCount} question${questionCount===1?'':'s'} · ${timing}`),
+    element('p',`Paper ${paperNumber} Practice · ${questionCount} question${questionCount===1?'':'s'} · ${timing}`),
     element('p','Name: ______________________________     Date: ______________','paper-name'));
   const paper=element('div',undefined,'paper-document');
   paper.append(header);
@@ -855,7 +857,7 @@ function createStudyController(){
   $('paper-scope').addEventListener('change',showPool);
   $('paper-count').addEventListener('input',()=>{
     const count=$('paper-count').valueAsNumber;
-    if(count>=1&&count<=40)$('paper-minutes').value=Math.ceil(count*(asPaper?75:45)/40);
+    if(count>=1&&count<=40)$('paper-minutes').value=Math.ceil(count*(asPaper?75:45)/fullPaperCount);
     $('paper-setup-error').hidden=true;
   });
 
@@ -1168,15 +1170,16 @@ function createStudyController(){
 const $ = id => document.getElementById(id);
 const state = {view:'included',items:[],directory:[],selected:null,detail:null,tab:'question',zoom:100,answer:false,choice:null,topic:null,listSequence:0,detailSequence:0};
 const sessions = {FM:'Feb/Mar',MJ:'May/June',ON:'Oct/Nov'};
-const asPage = !['0625','0620','9701-as'].includes(new URLSearchParams(location.search).get('bank'));
-const chemistryBanks = {'0620':'0620 IGCSE 化学 · Paper 2','9701-as':'9701 AS 化学 · Paper 1'};
+const asPage = !['0625','0620','9701-as','0455'].includes(new URLSearchParams(location.search).get('bank'));
+const examBanks = {'0620':'0620 IGCSE 化学 · Paper 2','9701-as':'9701 AS 化学 · Paper 1','0455':'0455 IGCSE 经济 · Paper 1'};
 const requestedBank = new URLSearchParams(location.search).get('bank');
-const chemistryPage = Object.hasOwn(chemistryBanks,requestedBank);
-const pageBank = chemistryPage?requestedBank:asPage?'9702-as':'0625';
+const examPage = ['0620','9701-as','0455'].includes(requestedBank);
+const pageBank = examPage?requestedBank:asPage?'9702-as':'0625';
 const bankLink = document.querySelector(`[data-site-bank="${pageBank}"]`);
 bankLink.setAttribute('aria-current','page');
 bankLink.closest('details').open=true;
 const asPaper = asPage||pageBank==='9701-as';
+const fullPaperCount = pageBank==='0455'?30:40;
 let chapterNames = asPage
   ? ['物理量和单位','运动学','动力学','力、密度和压强','功、能量和功率','固体形变','波','叠加','电学','直流电路','粒子物理']
   : ['运动、力和能量','热物理','波','电和磁','核物理','空间物理'];
@@ -1590,7 +1593,7 @@ function renderDirectory(){
     const title=state.view==='skipped'?(item.scope_status==='LEGACY'?'旧考纲归档':'来源或答案待复核'):escapeHtml(topicSummary(item.primary_summary_cn));
     button.innerHTML=`<div class="row-top"><span class="row-number">${escapeHtml(item.chapter_code||'')}</span><span class="row-progress" hidden></span></div><div class="row-title">${title}</div><div class="row-source">${item.year} ${sessions[item.session_code]} · ${item.component_code} / Q${item.original_question_number}</div>`;
     button.dataset.label=examSource(item);
-    if(chemistryPage){
+    if(examPage){
       button.querySelector('.row-number').textContent=item.chapter_code;
       button.dataset.label=`${item.year}年 ${item.component_code}卷，原题第${item.original_question_number}题`;
     }
@@ -1792,7 +1795,7 @@ function paintProgress(){
   $('appendix-progress').hidden=!appendix.answered;
   $('appendix-progress').textContent=`附录等独立考点 · ${byAttempts?'答对 / 作答':'已答且不在错题本 / 已答'} ${appendix.answered-appendix.wrong} / ${appendix.answered}`;
   $('reset-progress').disabled=!allQuestions;
-  const activeChapters=(asPage||chemistryPage)?chapters.filter(chapter=>
+  const activeChapters=(asPage||examPage)?chapters.filter(chapter=>
     [...sections.keys()].some(code=>code.startsWith(chapter.number+'.'))):chapters;
   $('accuracy-chart').toggleAttribute('hidden',activeChapters.length<3);
   if(activeChapters.length>=3)renderAccuracyRadar($('accuracy-chart'),activeChapters,expandedChapter);
@@ -1845,8 +1848,8 @@ function progressChanged(id,reset=false,studyChanged=false,preferencesChanged=fa
 }
 
 function paintPreferences(){
-  const asEmpty=!asAvailable&&!chemistryPage&&(asPage||progress.preferences.bank==='9702-as');
-  $('current-bank-label').textContent=chemistryPage?chemistryBanks[pageBank]:asEmpty?'9702 AS · PHYSICS':asPage?'9702 AS · PAPER 1':'0625 IGCSE · PAPER 2';
+  const asEmpty=!asAvailable&&!examPage&&(asPage||progress.preferences.bank==='9702-as');
+  $('current-bank-label').textContent=examPage?examBanks[pageBank]:asEmpty?'9702 AS · PHYSICS':asPage?'9702 AS · PAPER 1':'0625 IGCSE · PAPER 2';
   $('igcse-syllabus').hidden=asEmpty;
   $('igcse-bank').hidden=asEmpty;
   $('as-bank').hidden=!asEmpty;
@@ -2109,15 +2112,15 @@ async function init(){
     }
     paintPreferences();
     if(!info.syllabus)return;
-    if(chemistryPage)chapterNames=Object.keys(info.chapter_groups).sort((a,b)=>a-b).map(code=>info.chapter_groups[code]);
-    if(asPage||chemistryPage){
+    if(examPage)chapterNames=Object.keys(info.chapter_groups).sort((a,b)=>a-b).map(code=>info.chapter_groups[code]);
+    if(asPage||examPage){
       $('progress-label').textContent='学习进度 · 章节正确率';
       $('accuracy-chart').setAttribute('aria-label','章节正确率雷达图');
-      $('paper-count').value=Math.min(catalogue.items.length,40);
-      $('paper-minutes').value=Math.ceil(Number($('paper-count').value)*(asPaper?75:45)/40);
+      $('paper-count').value=Math.min(catalogue.items.length,fullPaperCount);
+      $('paper-minutes').value=Math.ceil(Number($('paper-count').value)*(asPaper?75:45)/fullPaperCount);
     }
     allQuestions=catalogue.items;
-    syllabusSections=new Map(Object.keys(info.chapters).filter(code=>!chemistryPage||/^\d+\.\d+$/.test(code))
+    syllabusSections=new Map(Object.keys(info.chapters).filter(code=>!examPage||/^\d+\.\d+$/.test(code))
       .sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})).map(code=>[code,topicSummary(info.chapter_titles[code])]));
     sectionsById=new Map(allQuestions.map(item=>{
       const prefix=item.primary_objective?.match(/^\d+\.\d+(?=\.|$)/)?.[0];
