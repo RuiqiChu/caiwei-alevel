@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="采薇alevel课堂。按考纲练习 Cambridge 物理、化学和经济选择题。">
   <title>采薇alevel课堂</title>
-  <link rel="stylesheet" href="./style.css?v=a4c0d0494b2a2d61">
+  <link rel="stylesheet" href="./style.css?v=690c913185d5b95f">
   
 
 
@@ -26,7 +26,7 @@
         <div class="classroom-subnav">
           <a href="./?bank=0625" data-site-bank="0625">IGCSE</a>
           <a href="./?bank=9702-as" data-site-bank="9702-as">AS</a>
-          <a href="./lab.html?v=a4c0d0494b2a2d61">交互实验室</a>
+          <a href="./lab.html?v=690c913185d5b95f">交互实验室</a>
         </div>
       </details>
       <details name="classroom-subject" data-subject="chemistry">
@@ -105,13 +105,25 @@
     <div class="workspace" id="workspace">
       <aside class="library">
         <div class="library-top"><h2>题目目录</h2><button class="text-button" id="reset-filters">重置筛选</button></div>
-        <div class="list-tabs" role="group" aria-label="题目状态"><button id="included-tab" class="active" aria-pressed="true">全部题目 <span id="included-count">—</span></button><button id="wrong-tab" aria-pressed="false">错题本 <span id="wrong-count">0</span></button><button id="notes-tab" aria-pressed="false">有笔记题目</button><button id="favorites-tab" aria-pressed="false" hidden>收藏题目</button><button id="skipped-tab" aria-pressed="false">旧考纲 / 跳过 <span id="skipped-count">—</span></button></div>
+        <div class="list-tabs" role="group" aria-label="题目状态"><button id="included-tab" class="active" aria-pressed="true">全部题目 <span id="included-count">—</span></button><button id="wrong-tab" aria-pressed="false">错题本 <span id="wrong-count">0</span></button><button id="notes-tab" aria-pressed="false">有笔记题目</button><button id="favorites-tab" aria-pressed="false" hidden>收藏题目</button><button id="classification-tab" aria-pressed="false" hidden>待分类/复核</button><button id="compound-tab" aria-pressed="false" hidden>复合题目</button><button id="skipped-tab" aria-pressed="false">旧考纲 / 跳过 <span id="skipped-count">—</span></button></div>
         <label class="check-filter wrong-book-preference" id="wrong-book-preference" hidden>
           <input id="remove-correct-questions" type="checkbox" checked>答对后自动移出错题本
         </label>
         <label class="search"><span class="sr-only">搜索英文题目、题号或考点</span><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="8" cy="8" r="5.5"/><path d="m12 12 5 5"/></svg><input id="search" type="search" placeholder="搜索英文题目、题号或考点"></label>
         <div class="filter-row"><label><span class="sr-only">考试年份</span><select id="year-filter"><option value="">全部年份</option></select></label><label><span class="sr-only">章节分册</span><select id="chapter-filter"><option value="">全部章节</option></select></label></div>
         <label class="check-filter"><input type="checkbox" id="primary-filter">仅显示主考点属于分册所在大章的题目</label>
+        <section id="project-review-panel" class="project-review" aria-labelledby="project-review-heading" hidden>
+          <h3 id="project-review-heading">项目待复核 <span id="project-review-count"></span></h3>
+          <input id="project-review-search" type="search" aria-label="搜索项目待复核题目" placeholder="搜索题号、年份或原因">
+          <p id="project-review-empty">本题库暂无项目待复核项。</p>
+          <ul id="project-review-list"></ul>
+          <nav id="project-review-pager" aria-label="复核清单分页" hidden>
+            <button id="project-review-prev" class="text-button" type="button">上一页</button>
+            <span id="project-review-page" aria-live="polite"></span>
+            <button id="project-review-next" class="text-button" type="button">下一页</button>
+          </nav>
+        </section>
+        <h3 id="manual-review-heading" class="manual-review-heading" hidden>手动标记</h3>
         <div class="list-meta"><span id="result-count" aria-live="polite">正在读取题目…</span><span>按原分册顺序</span></div>
         <div id="question-list" class="question-list" aria-label="题目列表"></div>
       </aside>
@@ -159,6 +171,7 @@
             </section>
             <nav class="practice-nav" aria-label="换题">
               <button id="favorite-question" type="button" class="secondary-button" aria-pressed="false" hidden>收藏题目</button>
+              <button id="classification-question" type="button" class="secondary-button" aria-pressed="false" hidden>标为待分类/复核</button>
               <button class="primary-button" id="next" disabled>下一题 →</button>
               <button class="secondary-button" id="random-next" disabled>随机下一题</button>
               <button class="secondary-button" id="retry-question" hidden>重做本题</button>
@@ -248,7 +261,7 @@
   </dialog>
   <div id="toast" class="toast" role="status" hidden></div>
 
-<script src="./questions.js?v=a4c0d0494b2a2d61" defer></script>
-<script src="./app.js?v=a4c0d0494b2a2d61" defer></script>
+<script src="./questions.js?v=690c913185d5b95f" defer></script>
+<script src="./app.js?v=690c913185d5b95f" defer></script>
 </body>
 </html>

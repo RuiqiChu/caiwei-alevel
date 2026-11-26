@@ -427,6 +427,65 @@ main{max-width:1690px;margin:0 auto;padding:0 42px}.intro{display:flex;justify-c
   cursor: pointer;
 }
 
+.project-review {
+  padding: 10px;
+  margin: 0 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--white);
+}
+
+.project-review h3,
+.manual-review-heading {
+  margin: 0 0 7px;
+  font-size: 13px;
+}
+
+.project-review h3 span,
+.project-review p {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+.project-review ul {
+  max-height: 235px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.project-review li {
+  padding: 8px 0;
+  border-top: 1px solid var(--line);
+}
+
+.project-review li strong {
+  font-size: 12px;
+}
+
+.project-review input {
+  width: 100%;
+  margin-bottom: 8px;
+  min-height: 34px;
+  padding-inline: 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+}
+
+#project-review-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
 .practice-tool textarea {
   display: block;
   width: 100%;
@@ -459,7 +518,8 @@ main{max-width:1690px;margin:0 auto;padding:0 42px}.intro{display:flex;justify-c
 }
 
 .difficulty-buttons button[aria-pressed="true"],
-#favorite-question[aria-pressed="true"] {
+#favorite-question[aria-pressed="true"],
+#classification-question[aria-pressed="true"] {
   border-color: var(--green);
   background: var(--green-wash);
   font-weight: 600;

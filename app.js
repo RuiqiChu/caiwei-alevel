@@ -1217,6 +1217,7 @@ function createPracticeTools({getQuestion, onCollectionChange, onModeChange, not
 
   const hasNote = id => read('note:' + id) !== null;
   const isFavorite = id => read('favorite:' + id) === '1';
+  const needsClassification = id => read('classification:' + id) === '1';
   const voteButtons = [...$('difficulty-buttons').querySelectorAll('button')];
 
   function getVoterId() {
@@ -1312,6 +1313,11 @@ function createPracticeTools({getQuestion, onCollectionChange, onModeChange, not
     favorite.hidden = !(id && testMode);
     favorite.textContent = isFavorite(id) ? '取消收藏' : '收藏题目';
     favorite.setAttribute('aria-pressed', String(isFavorite(id)));
+    const classification = $('classification-question');
+    const isPending = needsClassification(id);
+    classification.hidden = !(id && testMode);
+    classification.textContent = isPending ? '移出清单' : '标为待分类/复核';
+    classification.setAttribute('aria-pressed', String(isPending));
 
     const nextRating = answered ? id : null;
     $('difficulty-rating').hidden = !nextRating;
@@ -1328,20 +1334,23 @@ function createPracticeTools({getQuestion, onCollectionChange, onModeChange, not
     ratingId = nextRating;
   }
 
+  function paintTestMode() {
+    $('test-mode-toggle').textContent = testMode ? '退出测试版' : '测试版';
+    for (const view of ['favorites','classification','compound']) $(view + '-tab').hidden = !testMode;
+  }
+
   function setTestMode(enabled) {
     testMode = enabled;
     try {
       if (enabled) sessionStorage.setItem(testKey, '1');
       else sessionStorage.removeItem(testKey);
     } catch {}
-    $('test-mode-toggle').textContent = enabled ? '退出测试版' : '测试版';
-    $('favorites-tab').hidden = !enabled;
+    paintTestMode();
     onModeChange(enabled);
     paint();
   }
 
-  $('test-mode-toggle').textContent = testMode ? '退出测试版' : '测试版';
-  $('favorites-tab').hidden = !testMode;
+  paintTestMode();
   $('test-mode-toggle').addEventListener('click', () => {
     if (testMode) {
       setTestMode(false);
@@ -1383,11 +1392,21 @@ function createPracticeTools({getQuestion, onCollectionChange, onModeChange, not
     paint();
     onCollectionChange();
   });
+  $('classification-question').addEventListener('click', () => {
+    if (!testMode || !questionId) return;
+    const value = needsClassification(questionId) ? null : '1';
+    if (!save('classification:' + questionId, value)) {
+      notify('待分类/复核标记保存失败。');
+      return;
+    }
+    paint();
+    onCollectionChange();
+  });
   voteButtons.forEach(button => button.addEventListener('click', () => {
     if (ratingId) void vote(ratingId, Number(button.value));
   }));
   window.addEventListener('storage', event => {
-    if (event.key?.startsWith(prefix + 'note:') || event.key?.startsWith(prefix + 'favorite:')) {
+    if (['note:','favorite:','classification:'].some(key => event.key?.startsWith(prefix + key))) {
       if (event.key === prefix + 'note:' + questionId && document.activeElement !== $('question-note-text')) {
         $('question-note-text').value = read('note:' + questionId) || '';
       }
@@ -1396,12 +1415,13 @@ function createPracticeTools({getQuestion, onCollectionChange, onModeChange, not
     }
   });
 
-  return {paint, hasNote, isFavorite, testMode: () => testMode};
+  return {paint, hasNote, isFavorite, needsClassification, testMode: () => testMode};
 }
 
 
-const practiceViews=['included','wrong','notes','favorites','skipped'];
-const collectionLabels={wrong:'错题本',notes:'有笔记题目',favorites:'收藏题目'};
+const testViews=['favorites','classification','compound'];
+const practiceViews=['included','wrong','notes',...testViews,'skipped'];
+const collectionLabels={wrong:'错题本',notes:'有笔记题目',favorites:'收藏题目',classification:'待分类/复核',compound:'复合题目'};
 const configuredRatingEndpoint=null;
 const useLocalRatingDemo=location.protocol==='file:'||location.hostname.endsWith('.github.io');
 const practiceTools=createPracticeTools({
@@ -1410,18 +1430,57 @@ const practiceTools=createPracticeTools({
     return {id,answered:Boolean(id&&(state.choice!==null||progress.records.has(id))),openNote:state.view==='notes'};
   },
   onCollectionChange:()=>{
-    if(state.view==='notes'||state.view==='favorites'){
+    if(['notes','favorites','classification'].includes(state.view)){
       if(!state.selected||!visibleInDirectory({question_id:state.selected}))void loadList({remember:false});
       else{renderDirectory();paintNavigation();}
     }
   },
   onModeChange:enabled=>{
     if(allQuestions)paintProgress();
-    if(!enabled&&state.view==='favorites')showView('included');
+    if(!enabled&&testViews.includes(state.view))showView('included');
   },
   notify:toast,
   ratingEndpoint:configuredRatingEndpoint||(useLocalRatingDemo?null:'/api/ratings'),
 });
+
+let reviewPage=0;
+const reviewPageSize=20;
+function renderProjectReviews(){
+  const query=$('project-review-search').value.trim().toLowerCase();
+  const reviews=offlineBank.review_queue.filter(review=>
+    [review.question_id,examSource(review),review.reason_cn].some(text=>text.toLowerCase().includes(query)));
+  const pages=Math.max(1,Math.ceil(reviews.length/reviewPageSize));
+  reviewPage=Math.min(reviewPage,pages-1);
+  $('project-review-count').textContent=query?`${reviews.length} / ${offlineBank.review_queue.length} 题`:`${reviews.length} 题`;
+  $('project-review-empty').hidden=reviews.length>0;
+  $('project-review-empty').textContent=query?'没有符合条件的复核项。':'本题库暂无项目待复核项。';
+  $('project-review-search').hidden=offlineBank.review_queue.length===0;
+  $('project-review-pager').hidden=pages===1;
+  $('project-review-page').textContent=`${reviewPage+1} / ${pages}`;
+  $('project-review-prev').disabled=reviewPage===0;
+  $('project-review-next').disabled=reviewPage+1===pages;
+  const start=reviewPage*reviewPageSize;
+  const items=reviews.slice(start,start+reviewPageSize).map(review=>{
+    const item=document.createElement('li');
+    const source=document.createElement('strong');
+    source.textContent=examSource(review);
+    const reason=document.createElement('p');
+    reason.textContent=review.reason_cn;
+    item.append(source,reason);
+    return item;
+  });
+  $('project-review-list').replaceChildren(...items);
+  $('project-review-list').scrollTop=0;
+}
+function paintReviewQueue(){
+  const visible=state.view==='classification'&&practiceTools.testMode();
+  $('project-review-panel').hidden=!visible;
+  $('manual-review-heading').hidden=!visible;
+  if(visible)renderProjectReviews();
+}
+$('project-review-search').addEventListener('input',()=>{reviewPage=0;renderProjectReviews();});
+$('project-review-prev').addEventListener('click',()=>{reviewPage--;renderProjectReviews();});
+$('project-review-next').addEventListener('click',()=>{reviewPage++;renderProjectReviews();});
 
 function toast(message){$('toast').textContent=message;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,4500);}
 // GitHub Pages adapter: use the static catalogue and fetch question details by chapter.
@@ -1539,6 +1598,7 @@ function showView(view){
 }
 function updateViewButtons(){
   const skip=state.view==='skipped';
+  paintReviewQueue();
   for(const view of practiceViews){
     const active=state.view===view;
     $(view+'-tab').classList.toggle('active',active);
@@ -1551,7 +1611,12 @@ function updateViewButtons(){
 function isWrong(id){return isInWrongBook(progress.records.get(id));}
 function visibleInDirectory(item){
   if(state.view==='notes')return practiceTools.hasNote(item.question_id);
-  if(state.view==='favorites')return practiceTools.testMode()&&practiceTools.isFavorite(item.question_id);
+  if(testViews.includes(state.view)){
+    if(!practiceTools.testMode())return false;
+    if(state.view==='favorites')return practiceTools.isFavorite(item.question_id);
+    if(state.view==='classification')return practiceTools.needsClassification(item.question_id);
+    return item.is_compound===true;
+  }
   return state.view!=='wrong'||isWrong(item.question_id);
 }
 
@@ -1621,8 +1686,8 @@ function showEmptyState(empty){
   $('empty-state').hidden=!empty;
   $('question-content').hidden=empty;
   $('inspector-note').closest('.inspector').hidden=empty;
-  $('empty-title').textContent=emptyCollection?(state.view==='wrong'?'错题本已清空':`${emptyCollection}暂无记录`):'没有找到符合条件的题目';
-  $('empty-help').textContent=emptyCollection?(state.view==='wrong'?'答错的题会自动加入错题本。':''):'可以调整年份、章节，或清空搜索条件。';
+  $('empty-title').textContent=emptyCollection?({wrong:'错题本已清空',classification:'暂无手动标记的题目'}[state.view]||`${emptyCollection}暂无记录`):'没有找到符合条件的题目';
+  $('empty-help').textContent=emptyCollection?({wrong:'答错的题会自动加入错题本。',classification:'在题目下方点「标为待分类/复核」即可加入。'}[state.view]||''):'可以调整年份、章节，或清空搜索条件。';
   $('empty-reset').textContent=emptyCollection?'返回全部题目':'重置筛选';
 }
 
