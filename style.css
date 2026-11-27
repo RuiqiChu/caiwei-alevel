@@ -472,8 +472,8 @@ main{max-width:1690px;margin:0 auto;padding:0 42px}.intro{display:flex;justify-c
 }
 
 .project-review li button[aria-current="true"] {
-  border-color: var(--accent);
-  background: var(--mist);
+  border-color: var(--green);
+  background: var(--green-wash);
 }
 
 .project-review input {
