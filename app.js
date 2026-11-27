@@ -1462,8 +1462,21 @@ function renderProjectReviews(){
   const start=reviewPage*reviewPageSize;
   const items=reviews.slice(start,start+reviewPageSize).map(review=>{
     const item=document.createElement('li');
-    const source=document.createElement('strong');
+    const hasDetail=Object.hasOwn(offlineBank.review_details,review.question_id);
+    const source=document.createElement(hasDetail?'button':'strong');
     source.textContent=examSource(review);
+    if(hasDetail){
+      source.type='button';
+      source.className='text-button';
+      source.dataset.reviewQuestion=review.question_id;
+      source.setAttribute('aria-label','查看题目 '+examSource(review));
+      source.setAttribute('aria-current',String(state.selected===review.question_id));
+      source.addEventListener('click',()=>{
+        ++state.listSequence;
+        showEmptyState(false);
+        void selectQuestion(review.question_id,{scroll:true,remember:false});
+      });
+    }
     const reason=document.createElement('p');
     reason.textContent=review.reason_cn;
     item.append(source,reason);
@@ -1556,6 +1569,11 @@ async function loadQuestionDetails(rows) {
 async function api(path){
   const url=new URL(path,'https://offline.invalid');
   if(url.pathname==='/api/overview')return offlineBank.overview;
+  if(url.pathname==='/api/project-review'){
+    const detail=offlineBank.review_details[url.searchParams.get('id')];
+    if(!practiceTools.testMode()||state.view!=='classification'||!detail?.project_review)throw new Error('未找到该复核题目');
+    return detail;
+  }
   if(url.pathname==='/api/question'){
     const row=offlineQuestions.get(url.searchParams.get('id'));
     if(!row)throw new Error('未找到该题目');
@@ -1694,6 +1712,9 @@ function showEmptyState(empty){
 async function selectQuestion(id,{scroll=false,remember=true}={}){
   const previous=state.selected;
   const sequence=++state.detailSequence;state.selected=id;
+  for(const item of $('project-review-list').querySelectorAll('[data-review-question]')){
+    item.setAttribute('aria-current',String(item.dataset.reviewQuestion===id));
+  }
   state.detail=null;resetPractice();
   $('previous').disabled=true;$('next').disabled=true;$('random-next').disabled=true;
   $('document-image').onload=null;$('document-image').onerror=null;
@@ -1701,7 +1722,8 @@ async function selectQuestion(id,{scroll=false,remember=true}={}){
   if($('row-'+id))highlightRow($('row-'+id),true);
   $('question-title').textContent='正在载入…';$('page-loading').hidden=false;$('page-sheet').hidden=true;$('electronic-question').hidden=true;
   try{
-    const detail=await api('/api/question?id='+encodeURIComponent(id));if(sequence!==state.detailSequence)return;
+    const isReview=state.view==='classification'&&Object.hasOwn(offlineBank.review_details,id);
+    const detail=await api((isReview?'/api/project-review?id=':'/api/question?id=')+encodeURIComponent(id));if(sequence!==state.detailSequence)return;
     state.detail=detail;state.tab=detail.electronic_content?'electronic':'question';state.zoom=100;state.topic=detail.topics.find(t=>t.topic_role==='PRIMARY')||null;
     if(remember&&detail.status==='included')void progress.remember(id);
     paintDetail();showDocument();
@@ -1717,15 +1739,15 @@ function examSource(question){
 }
 
 function paintDetail(){
-  const d=state.detail;const skip=d.status==='skipped';
-  $('question-title').textContent=skip?(d.scope_status==='LEGACY'?'旧考纲归档':'来源或答案待复核'):topicSummary(d.primary_summary_cn);
+  const d=state.detail;const skip=d.status==='skipped';const review=d.project_review===true;
+  $('question-title').textContent=skip?(review?'待分类/复核':d.scope_status==='LEGACY'?'旧考纲归档':'来源或答案待复核'):topicSummary(d.primary_summary_cn);
   $('question-source').textContent=`${d.year} ${sessions[d.session_code]} · Component ${d.component_code} · 原卷第 ${d.original_question_number} 题`;
   paintNavigation();paintQuestionProgress();
   $('tab-ms').disabled=skip;$('tab-syllabus').disabled=skip;
   $('tab-electronic').disabled=!d.electronic_content;
-  resetPractice();$('reveal-answer').hidden=skip;
-  $('scope-badge').textContent=skip?(d.scope_status==='LEGACY'?'旧考纲':'已跳过 · 待复核'):'现行考纲';$('scope-badge').classList.toggle('skipped',skip);
-  $('question-marks').textContent=skip?'问题项保留来源与待复核原因':`${d.marks} mark`;
+  resetPractice();
+  $('scope-badge').textContent=skip?(review?'待分类/复核':d.scope_status==='LEGACY'?'旧考纲':'已跳过 · 待复核'):'现行考纲';$('scope-badge').classList.toggle('skipped',skip);
+  $('question-marks').textContent=skip&&!review?'问题项保留来源与待复核原因':`${d.marks} mark`;
   $('topic-list').replaceChildren();
   for(const topic of d.topics){
     const button=document.createElement('div');button.className='topic-card'+(topic.topic_role==='SECONDARY'?' secondary':'');
@@ -1736,7 +1758,7 @@ function paintDetail(){
   $('review-note').textContent=skip?d.evidence_note_cn:'';
   $('source-info').innerHTML=`<dt>考季</dt><dd>${d.year} ${sessions[d.session_code]}</dd><dt>试卷</dt><dd>${d.question_id.slice(0,4)} / ${d.component_code}</dd><dt>原题号</dt><dd>Q${d.original_question_number}</dd>`;
   $('report-question').hidden=skip;
-  $('inspector-note').hidden=!skip;
+  $('inspector-note').hidden=!skip||review;
 }
 
 function neighbour(direction){
@@ -1752,11 +1774,11 @@ function paintNavigation(){
   const d=state.detail;
   if(!d)return;
   const index=state.items.findIndex(item=>item.question_id===d.question_id);
-  const position=state.view==='wrong'&&index<0?'已移出错题本':`${d.status==='skipped'?'已跳过':'当前题目'} ${index+1} / ${state.items.length}`;
+  const position=d.project_review?'项目待复核':state.view==='wrong'&&index<0?'已移出错题本':`${d.status==='skipped'?'已跳过':'当前题目'} ${index+1} / ${state.items.length}`;
   $('question-position').textContent=position;
   $('previous').disabled=!neighbour(-1);
   $('next').disabled=!neighbour(1);
-  $('random-next').disabled=randomRequest||Boolean(collectionLabels[state.view]&&!allQuestions?.some(visibleInDirectory));
+  $('random-next').disabled=Boolean(d.project_review)||randomRequest||Boolean(collectionLabels[state.view]&&!allQuestions?.some(visibleInDirectory));
   $('wrong-done').hidden=!(state.view==='wrong'&&index<0&&!wrongCount());
 }
 
@@ -2053,7 +2075,7 @@ function renderQuestionContent(article,body,questionId,onChoose=null){
 function renderElectronic(body){
   const article=$('electronic-question');article.replaceChildren();
   const kicker=document.createElement('div');kicker.className='electronic-kicker';kicker.textContent=`QUESTION ${state.detail.original_question_number} · 1 MARK`;article.append(kicker);
-  renderQuestionContent(article,body,state.detail.question_id,chooseAnswer);
+  renderQuestionContent(article,body,state.detail.question_id,state.detail.project_review?null:chooseAnswer);
   paintChoices();
 }
 function canPractice(){
@@ -2065,7 +2087,7 @@ function resetPractice(){
   $('answer-result').hidden=true;
   $('answer-letter').textContent='';$('answer-syllabus').textContent='';$('answer-source').textContent='';
   $('practice-feedback').textContent='';$('practice-feedback').hidden=true;
-  const ready=canPractice();
+  const ready=canPractice()||(state.detail?.project_review===true&&/^[ABCD]$/.test(state.detail.correct_option));
   $('reveal-answer').disabled=!ready;$('reveal-answer').hidden=!ready;$('answer-panel').hidden=!ready;
   $('retry-question').hidden=true;
   paintChoices();
@@ -2095,7 +2117,7 @@ function chooseAnswer(label){
   void progress.record(d.question_id,label,correct);
 }
 function showAnswer(){
-  const d=state.detail;if(!d||d.status==='skipped')return;
+  const d=state.detail;if(!d||(d.status==='skipped'&&!d.project_review))return;
   state.answer=true;$('reveal-answer').hidden=true;$('answer-result').hidden=false;
   $('answer-letter').textContent=`标准答案：${d.correct_option}`;
   const primary=d.topics.find(topic=>topic.topic_role==='PRIMARY');
