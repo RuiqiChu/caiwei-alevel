@@ -327,7 +327,7 @@ const practiceStore = 'practice';
 const asPracticeStore = 'practice-9702-as';
 const preferenceStore = 'preferences';
 const preferenceKey = 'interface';
-const bankStores = {'0625':practiceStore,'9702-as':asPracticeStore,'0620':'practice-0620','9701-as':'practice-9701-as','0455':'practice-0455'};
+const bankStores = {'0625':practiceStore,'9702-as':asPracticeStore,'0620':'practice-0620','9701-as':'practice-9701-as','0455':'practice-0455','9708-as':'practice-9708-as'};
 const defaultPreferences = Object.freeze({bank:'9702-as',removeCorrect:true,revision:0});
 const resumeKey = 'last-question';
 const resetKey = 'reset-generation';
@@ -361,7 +361,7 @@ function openProgressDatabase(name){
   return new Promise((resolve,reject)=>{
     let timedOut=false;
     let blockedTimer;
-    const request=indexedDB.open(name,7);
+    const request=indexedDB.open(name,8);
     request.onupgradeneeded=event=>{
       // Keep version 1 records. The reset marker is added only when resetting.
       if(!event.oldVersion)request.result.createObjectStore(practiceStore,{keyPath:'id'});
@@ -372,6 +372,7 @@ function openProgressDatabase(name){
         request.result.createObjectStore(bankStores['9701-as'],{keyPath:'id'});
       }
       if(event.oldVersion<7)request.result.createObjectStore(bankStores['0455'],{keyPath:'id'});
+      if(event.oldVersion<8)request.result.createObjectStore(bankStores['9708-as'],{keyPath:'id'});
     };
     request.onsuccess=()=>{
       clearTimeout(blockedTimer);
@@ -1170,16 +1171,16 @@ function createStudyController(){
 const $ = id => document.getElementById(id);
 const state = {view:'included',items:[],directory:[],selected:null,detail:null,tab:'question',zoom:100,answer:false,choice:null,topic:null,listSequence:0,detailSequence:0};
 const sessions = {FM:'Feb/Mar',MJ:'May/June',ON:'Oct/Nov'};
-const asPage = !['0625','0620','9701-as','0455'].includes(new URLSearchParams(location.search).get('bank'));
-const examBanks = {'0620':'0620 IGCSE 化学 · Paper 2','9701-as':'9701 AS 化学 · Paper 1','0455':'0455 IGCSE 经济 · Paper 1'};
+const asPage = !['0625','0620','9701-as','0455','9708-as'].includes(new URLSearchParams(location.search).get('bank'));
+const examBanks = {'0620':'0620 IGCSE 化学 · Paper 2','9701-as':'9701 AS 化学 · Paper 1','0455':'0455 IGCSE 经济 · Paper 1','9708-as':'9708 AS 经济 · Paper 1'};
 const requestedBank = new URLSearchParams(location.search).get('bank');
-const examPage = ['0620','9701-as','0455'].includes(requestedBank);
+const examPage = ['0620','9701-as','0455','9708-as'].includes(requestedBank);
 const pageBank = examPage?requestedBank:asPage?'9702-as':'0625';
 const bankLink = document.querySelector(`[data-site-bank="${pageBank}"]`);
 bankLink.setAttribute('aria-current','page');
 bankLink.closest('details').open=true;
 const asPaper = asPage||pageBank==='9701-as';
-const fullPaperCount = pageBank==='0455'?30:40;
+const fullPaperCount = ['0455','9708-as'].includes(pageBank)?30:40;
 let chapterNames = asPage
   ? ['物理量和单位','运动学','动力学','力、密度和压强','功、能量和功率','固体形变','波','叠加','电学','直流电路','粒子物理']
   : ['运动、力和能量','热物理','波','电和磁','核物理','空间物理'];
@@ -2204,7 +2205,8 @@ async function init(){
       $('progress-label').textContent='学习进度 · 章节正确率';
       $('accuracy-chart').setAttribute('aria-label','章节正确率雷达图');
       $('paper-count').value=Math.min(catalogue.items.length,fullPaperCount);
-      $('paper-minutes').value=Math.ceil(Number($('paper-count').value)*(asPaper?75:45)/fullPaperCount);
+      const fullPaperMinutes=pageBank==='9708-as'?60:asPaper?75:45;
+      $('paper-minutes').value=Math.ceil(Number($('paper-count').value)*fullPaperMinutes/fullPaperCount);
     }
     allQuestions=catalogue.items;
     syllabusSections=new Map(Object.keys(info.chapters).filter(code=>!examPage||/^\d+\.\d+$/.test(code))
